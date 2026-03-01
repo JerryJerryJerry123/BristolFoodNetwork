@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .hero{
+            padding:100px 20px;
+        }
+
+        .btn{
+            display:inline-block;
+            padding:14px 24px;
+            margin:15px;
+            border-radius:8px;
+            text-decoration:none;
+            color:white;
+            background:#2563eb;
+        }
+
+        .btn.register{
+            background:#16a34a;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        {% if user.is_authenticated %}
+            {% if user.producerprofile %}
+                <a href="/product/new/">Add Product</a>
+            {% endif %}
+
+            <form method="post" action="/logout/">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <a href="/login/">Login</a>
+            <a href="/register/">Register</a>
+        {% endif %}  
+    </div>
+</nav>
+
+<div class="hero">
+    <h1>Local Food Marketplace</h1>
+    <p>Connect with local producers and customers</p>
+
+    <div>
+        <a class="btn register" href="/register/">Join Now</a>
+        <a class="btn" href="#">Browse Marketplace</a>
+    </div>
+</div>
+
+</body>
+</html>

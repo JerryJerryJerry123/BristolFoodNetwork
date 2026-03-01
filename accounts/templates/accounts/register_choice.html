@@ -1,0 +1,13 @@
+<h2>Register</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <button type="submit" name="user_type" value="producer">
+        Register as Producer
+    </button>
+
+    <button type="submit" name="user_type" value="customer">
+        Register as Customer
+    </button>
+</form>

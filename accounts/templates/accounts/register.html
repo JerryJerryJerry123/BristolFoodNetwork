@@ -1,0 +1,40 @@
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Register</button>
+</form>
+<script>
+function toggleFields() {
+    let role = document.getElementById("id_user_type").value;
+
+    let producerFields = [
+        "id_business_name",
+        "id_contact_name",
+        "id_producer_phone",
+        "id_producer_address",
+        "id_producer_postcode"
+    ];
+
+    let customerFields = [
+        "id_full_name",
+        "id_customer_phone",
+        "id_delivery_address",
+        "id_customer_postcode"
+    ];
+
+    function showHide(fields, show) {
+        fields.forEach(id => {
+            let el = document.getElementById(id).parentElement;
+            if (el) el.style.display = show ? "block" : "none";
+        });
+    }
+
+    showHide(producerFields, role === "producer");
+    showHide(customerFields, role === "customer");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("id_user_type").addEventListener("change", toggleFields);
+    toggleFields();
+});
+</script>
