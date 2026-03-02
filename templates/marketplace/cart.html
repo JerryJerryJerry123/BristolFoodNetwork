@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Cart - Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:40px 20px;
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            max-width:900px;
+            margin:0 auto;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .messages{
+            max-width:900px;
+            margin:0 auto 15px auto;
+            text-align:left;
+        }
+
+        .messages ul{
+            list-style:none;
+            padding:0;
+            margin:0;
+        }
+
+        .messages li{
+            background:#ecfdf5;
+            border:1px solid #bbf7d0;
+            padding:10px 12px;
+            border-radius:10px;
+            margin-bottom:8px;
+        }
+
+        table{
+            width:100%;
+            border-collapse:separate;
+            border-spacing:0;
+            overflow:hidden;
+            border-radius:12px;
+        }
+
+        th, td{
+            padding:12px;
+            border-bottom:1px solid #e5e7eb;
+            vertical-align:middle;
+        }
+
+        th{
+            background:#f3f4f6;
+            text-align:left;
+        }
+
+        tr:last-child td{
+            border-bottom:none;
+        }
+
+        .qty-form{
+            display:flex;
+            gap:8px;
+            align-items:center;
+        }
+
+        input[type="number"]{
+            width:110px;
+            padding:8px;
+            border-radius:8px;
+            border:1px solid #d1d5db;
+        }
+
+        button{
+            padding:8px 12px;
+            border:none;
+            border-radius:8px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
+        }
+
+        button:hover{
+            filter:brightness(0.95);
+        }
+
+        .total{
+            margin-top:16px;
+            font-size:18px;
+        }
+
+        .muted-link{
+            display:inline-block;
+            margin-bottom:12px;
+            text-decoration:none;
+            color:#2563eb;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+
+        {% if user.is_authenticated %}
+            {% if user.producerprofile %}
+                <a href="/marketplace/product/new/">Add Product</a>
+            {% endif %}
+            {% if user.customerprofile %}
+                <a href="/marketplace/cart/">View Cart</a>
+            {% endif %}
+
+            <form method="post" action="/logout/" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <a href="/login/">Login</a>
+            <a href="/register/">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Your Cart</h1>
+
+    {% if messages %}
+        <div class="messages">
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <a class="muted-link" href="/marketplace/">← Continue Shopping</a>
+
+        {% if cart.items.exists %}
+            <table>
+                <tr>
+                    <th>Product</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Line Total</th>
+                </tr>
+
+                {% for item in cart.items.all %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>£{{ item.product.price }}</td>
+                    <td>
+                        <form class="qty-form" method="post" action="{% url 'update_cart_item' item.id %}">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" step="0.01" min="0" value="{{ item.quantity }}">
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                    <td>£{{ item.line_total }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <div class="total"><strong>Total:</strong> £{{ cart.total }}</div>
+        {% else %}
+            <p>Your cart is empty.</p>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,8 +1,118 @@
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Register</button>
-</form>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:60px 20px;
+        }
+
+        .card{
+            background:white;
+            padding:30px;
+            border-radius:12px;
+            max-width:600px;
+            margin:0 auto;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        h2{
+            margin-top:0;
+            text-align:center;
+        }
+
+        form p{
+            margin-bottom:15px;
+        }
+
+        input, select, textarea{
+            width:100%;
+            padding:10px;
+            border-radius:8px;
+            border:1px solid #d1d5db;
+            box-sizing:border-box;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
+            margin-top:15px;
+            font-size:16px;
+        }
+
+        button:hover{
+            filter:brightness(0.95);
+        }
+
+        .footer-link{
+            margin-top:20px;
+            text-align:center;
+        }
+
+        .footer-link a{
+            color:#2563eb;
+            text-decoration:none;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+        <a href="/login/">Login</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h2>Create Account</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Register</button>
+        </form>
+
+        <div class="footer-link">
+            Already have an account?
+            <a href="/login/">Login here</a>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleFields() {
     let role = document.getElementById("id_user_type").value;
@@ -24,8 +134,10 @@ function toggleFields() {
 
     function showHide(fields, show) {
         fields.forEach(id => {
-            let el = document.getElementById(id).parentElement;
-            if (el) el.style.display = show ? "block" : "none";
+            let el = document.getElementById(id);
+            if (el && el.parentElement) {
+                el.parentElement.style.display = show ? "block" : "none";
+            }
         });
     }
 
@@ -34,7 +146,13 @@ function toggleFields() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("id_user_type").addEventListener("change", toggleFields);
-    toggleFields();
+    let roleSelect = document.getElementById("id_user_type");
+    if (roleSelect) {
+        roleSelect.addEventListener("change", toggleFields);
+        toggleFields();
+    }
 });
 </script>
+
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ product.name }} - Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:40px 20px;
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            max-width:900px;
+            margin:0 auto;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .messages{
+            max-width:900px;
+            margin:0 auto 15px auto;
+            text-align:left;
+        }
+
+        .messages ul{
+            list-style:none;
+            padding:0;
+            margin:0;
+        }
+
+        .messages li{
+            background:#ecfdf5;
+            border:1px solid #bbf7d0;
+            padding:10px 12px;
+            border-radius:10px;
+            margin-bottom:8px;
+        }
+
+        .muted-link{
+            display:inline-block;
+            margin-bottom:12px;
+            text-decoration:none;
+            color:#2563eb;
+        }
+
+        .row{
+            margin:10px 0;
+        }
+
+        .badge{
+            display:inline-block;
+            padding:4px 10px;
+            border-radius:999px;
+            background:#e5e7eb;
+            font-size:12px;
+            margin-left:6px;
+        }
+
+        hr{
+            border:none;
+            border-top:1px solid #e5e7eb;
+            margin:18px 0;
+        }
+
+        label{
+            display:block;
+            margin-bottom:6px;
+        }
+
+        input[type="number"]{
+            width:160px;
+            padding:8px;
+            border-radius:8px;
+            border:1px solid #d1d5db;
+        }
+
+        button{
+            padding:10px 14px;
+            border:none;
+            border-radius:8px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
+            margin-left:8px;
+        }
+
+        button:hover{
+            filter:brightness(0.95);
+        }
+
+        .pill{
+            display:inline-block;
+            padding:6px 10px;
+            border-radius:10px;
+            background:#f3f4f6;
+            margin-top:6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+
+        {% if user.is_authenticated %}
+            {% if user.producerprofile %}
+                <a href="/marketplace/product/new/">Add Product</a>
+            {% endif %}
+            {% if user.customerprofile %}
+                <a href="/marketplace/cart/">View Cart</a>
+            {% endif %}
+
+            <form method="post" action="/logout/" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <a href="/login/">Login</a>
+            <a href="/register/">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="container">
+    <h1>{{ product.name }}</h1>
+
+    {% if messages %}
+        <div class="messages">
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <a class="muted-link" href="/marketplace/">← Back to Marketplace</a>
+
+        <div class="row">
+            <strong>Price:</strong> £{{ product.price }} / {{ product.unit }}
+        </div>
+
+        <div class="row">
+            <strong>Description:</strong><br>
+            <span class="pill">{{ product.description }}</span>
+        </div>
+
+        <div class="row">
+            <strong>Farm:</strong>
+            {% if product.producer.producerprofile %}
+                {{ product.producer.producerprofile.business_name }}
+            {% else %}
+                {{ product.producer.username }}
+            {% endif %}
+        </div>
+
+        <div class="row">
+            <strong>Availability:</strong>
+            <span class="badge">{{ product.get_status_display }}</span>
+        </div>
+
+        <hr>
+
+        <h2>Allergen Information</h2>
+
+        {% if allergens %}
+            <p><strong>Contains:</strong>
+                {% for a in allergens %}
+                    {{ a }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        {% else %}
+            <p>No common allergens.</p>
+        {% endif %}
+
+        <hr>
+
+        <h2>Add to Cart</h2>
+
+        <form method="post" action="{% url 'add_to_cart' product.id %}">
+            {% csrf_token %}
+
+            <label for="qty">Quantity ({{ product.unit }}):</label>
+            <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
+            <button type="submit">Add to Cart</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

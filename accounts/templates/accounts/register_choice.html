@@ -1,13 +1,122 @@
-<h2>Register</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - Bristol Food Network</title>
 
-<form method="post">
-    {% csrf_token %}
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
 
-    <button type="submit" name="user_type" value="producer">
-        Register as Producer
-    </button>
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
 
-    <button type="submit" name="user_type" value="customer">
-        Register as Customer
-    </button>
-</form>
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:60px 20px;
+        }
+
+        .card{
+            background:white;
+            padding:30px;
+            border-radius:12px;
+            max-width:500px;
+            margin:0 auto;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        h2{
+            margin-top:0;
+        }
+
+        .btn-group{
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+            margin-top:20px;
+        }
+
+        button{
+            padding:14px;
+            border:none;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+            color:white;
+        }
+
+        .producer-btn{
+            background:#2563eb;
+        }
+
+        .customer-btn{
+            background:#16a34a;
+        }
+
+        button:hover{
+            filter:brightness(0.95);
+        }
+
+        .footer-link{
+            margin-top:20px;
+        }
+
+        .footer-link a{
+            color:#2563eb;
+            text-decoration:none;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+        <a href="/login/">Login</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h2>Register</h2>
+        <p>Select how you would like to join the network:</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit" name="user_type" value="producer" class="producer-btn">
+                    Register as Producer
+                </button>
+
+                <button type="submit" name="user_type" value="customer" class="customer-btn">
+                    Register as Customer
+                </button>
+            </div>
+        </form>
+
+        <div class="footer-link">
+            Already have an account?
+            <a href="/login/">Login here</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
