@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Orders - Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:40px 20px;
+        }
+
+        .cards{
+            display:flex;
+            flex-wrap:wrap;
+            gap:20px;
+            justify-content:center;
+            margin-top:20px;
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            width:320px;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .card h3{
+            margin-top:0;
+        }
+
+        .section{
+            margin-top:10px;
+            font-size:14px;
+        }
+
+        .badge{
+            display:inline-block;
+            padding:4px 8px;
+            border-radius:999px;
+            background:#e5e7eb;
+            font-size:12px;
+            margin-top:6px;
+        }
+
+        ul{
+            padding-left:18px;
+            margin-top:6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+
+        {% if user.is_authenticated %}
+            {% if user.producerprofile %}
+                <a href="/marketplace/product/new/">Add Product</a>
+                <a href="/marketplace/producer/orders/">My Orders</a>
+            {% endif %}
+            {% if user.customerprofile %}
+                <a href="/marketplace/cart/">View Cart</a>
+            {% endif %}
+
+            <form method="post" action="/logout/" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <a href="/login/">Login</a>
+            <a href="/register/">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Incoming Orders</h1>
+
+    {% if suborders %}
+        <div class="cards">
+            {% for suborder in suborders %}
+                <div class="card">
+
+                    <h3>
+                        <a href="{% url 'producer_order_detail' suborder.id %}">
+                            Order #{{ suborder.order.id }}
+                        </a>
+                    </h3>
+
+                    <div class="section">
+                        <strong>Customer:</strong>
+                        {{ suborder.order.customer.full_name }}
+                    </div>
+
+                    <div class="section">
+                        <strong>Order Date:</strong>
+                        {{ suborder.order.created_at }}
+                    </div>
+
+                    <div class="section">
+                        <strong>Delivery Date:</strong>
+                        <span class="badge">
+                            {{ suborder.delivery_date }}
+                        </span>
+                    </div>
+
+                    <div class="section">
+                        <strong>Total:</strong>
+                        £{{ suborder.total|floatformat:2 }}
+                    </div>
+
+                    <div class="section">
+                        <strong>Items:</strong>
+                        <ul>
+                            {% for item in suborder.items.all %}
+                                <li>
+                                    {{ item.product.name }} —
+                                    {{ item.quantity|floatformat:2 }} —
+                                    £{{ item.line_total|floatformat:2 }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No incoming orders yet.</p>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Detail - Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:40px 20px;
+        }
+
+        .card{
+            background:white;
+            padding:25px;
+            border-radius:12px;
+            max-width:600px;
+            margin:0 auto;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .section{
+            margin-bottom:15px;
+        }
+
+        ul{
+            padding-left:20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+        <a href="/marketplace/producer/orders/">My Orders</a>
+
+        <form method="post" action="/logout/" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+
+    <h1>Order #{{ suborder.order.id }}</h1>
+
+    <div class="card">
+
+        <div class="section">
+            <strong>Customer:</strong>
+            {{ suborder.order.customer.full_name }}
+        </div>
+
+        <div class="section">
+            <strong>Phone:</strong>
+            {{ suborder.order.customer.phone }}
+        </div>
+
+        <div class="section">
+            <strong>Delivery Address:</strong><br>
+            {{ suborder.order.customer.delivery_address }}<br>
+            {{ suborder.order.customer.postcode }}
+        </div>
+
+        <div class="section">
+            <strong>Order Date:</strong>
+            {{ suborder.order.created_at }}
+        </div>
+
+        <div class="section">
+            <strong>Delivery Date:</strong>
+            {{ suborder.delivery_date }}
+        </div>
+
+        <div class="section">
+            <strong>Items:</strong>
+            <ul>
+                {% for item in suborder.items.all %}
+                    <li>
+                        {{ item.product.name }} —
+                        {{ item.quantity|floatformat:2 }} —
+                        £{{ item.line_total|floatformat:2 }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <strong>Total:</strong>
+            £{{ suborder.total|floatformat:2 }}
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

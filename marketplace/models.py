@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from accounts.models import CustomerProfile
+from django.utils import timezone
+from datetime import timedelta
 
 class Product(models.Model):
 
@@ -73,6 +75,46 @@ class CartItem(models.Model):
 
     class Meta:
         unique_together = ("cart", "product")
+
+    @property
+    def line_total(self):
+        return self.product.price * self.quantity
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
+class Order(models.Model):
+    customer = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"Order #{self.id} by {self.customer.user.username}"
+
+
+class SubOrder(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="suborders")
+    producer = models.ForeignKey(User, on_delete=models.CASCADE)
+    delivery_date = models.DateField()
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    @property
+    def total(self):
+        return sum(item.line_total for item in self.items.all())
+
+    def is_valid_delivery_date(self):
+        minimum_date = timezone.now() + timedelta(hours=48)
+        return self.delivery_date >= minimum_date.date()
+
+
+    def __str__(self):
+        return f"SubOrder #{self.id} - {self.producer.username}"
+
+
+class OrderItem(models.Model):
+    suborder = models.ForeignKey(SubOrder, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=8, decimal_places=2)
 
     @property
     def line_total(self):

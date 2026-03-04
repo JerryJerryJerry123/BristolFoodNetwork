@@ -8,6 +8,19 @@ from accounts.models import CustomerProfile
 from .forms import ProductForm
 from .models import Product, Category, Cart, CartItem
 
+from django.utils import timezone
+from datetime import timedelta
+from collections import defaultdict
+
+from .models import (
+    Product,
+    Category,
+    Cart,
+    CartItem,
+    Order,
+    SubOrder,
+    OrderItem
+)
 #login requirements
 @login_required
 def create_product(request):
@@ -164,3 +177,147 @@ def update_cart_item(request, item_id):
             messages.success(request, "Cart updated.")
 
     return redirect("view_cart")
+
+@login_required
+def checkout(request):
+    if not hasattr(request.user, "customerprofile"):
+        return redirect("/")
+
+    cart = _get_customer_cart(request.user)
+    cart_items = cart.items.select_related("product__producer")
+
+    if not cart_items.exists():
+        messages.error(request, "Your cart is empty.")
+        return redirect("view_cart")
+
+    if request.method == "POST":
+
+        # -----------------------------
+        # PAYMENT VALIDATION
+        # -----------------------------
+        payment_method = request.POST.get("payment_method")
+
+        if not payment_method:
+            messages.error(request, "Please select a payment method.")
+            return render(request, "marketplace/checkout.html", {
+                "cart": cart
+            })
+
+        if payment_method == "card":
+            card_number = request.POST.get("card_number", "").strip()
+            expiry = request.POST.get("expiry", "").strip()
+            cvv = request.POST.get("cvv", "").strip()
+
+            if not card_number or not expiry or not cvv:
+                messages.error(request, "Please enter card details.")
+                return render(request, "marketplace/checkout.html", {
+                    "cart": cart
+                })
+
+        # -----------------------------
+        # CREATE ORDER
+        # -----------------------------
+        order = Order.objects.create(
+            customer=request.user.customerprofile
+        )
+
+        grouped_items = defaultdict(list)
+
+        # Group items by producer
+        for item in cart_items:
+            grouped_items[item.product.producer].append(item)
+
+        total_amount = 0
+        minimum_date = timezone.now() + timedelta(hours=48)
+
+        for producer, items in grouped_items.items():
+
+            delivery_date_str = request.POST.get(f"delivery_date_{producer.id}")
+
+            if not delivery_date_str:
+                messages.error(request, "Please select a delivery date.")
+                return render(request, "marketplace/checkout.html", {
+                    "cart": cart
+                })
+
+            delivery_date = timezone.datetime.fromisoformat(delivery_date_str).date()
+
+            if delivery_date < minimum_date.date():
+                messages.error(request, "Delivery must be at least 48 hours from now.")
+                return render(request, "marketplace/checkout.html", {
+                    "cart": cart
+                })
+
+            suborder = SubOrder.objects.create(
+                order=order,
+                producer=producer,
+                delivery_date=delivery_date,
+            )
+
+            subtotal = 0
+
+            for item in items:
+                OrderItem.objects.create(
+                    suborder=suborder,
+                    product=item.product,
+                    quantity=item.quantity
+                )
+                subtotal += item.line_total
+
+            suborder.subtotal = subtotal
+            suborder.save()
+
+            total_amount += subtotal
+
+        order.total_amount = total_amount
+        order.save()
+
+        # Clear cart
+        cart.items.all().delete()
+
+        messages.success(request, "Order placed successfully!")
+        return redirect("/")
+
+    return render(request, "marketplace/checkout.html", {
+        "cart": cart
+    })
+
+from .models import SubOrder
+
+@login_required
+def producer_orders(request):
+    # Only producers allowed
+    if not hasattr(request.user, "producerprofile"):
+        return redirect("/")
+
+    # Get suborders belonging to this producer
+    suborders = SubOrder.objects.filter(
+        producer=request.user
+    ).select_related(
+        "order", "order__customer", "order__customer__user"
+    ).prefetch_related(
+        "items__product"
+    ).order_by("delivery_date")
+
+    return render(request, "marketplace/producer_orders.html", {
+        "suborders": suborders
+    })
+
+@login_required
+def producer_order_detail(request, suborder_id):
+    if not hasattr(request.user, "producerprofile"):
+        return redirect("/")
+
+    suborder = get_object_or_404(
+        SubOrder.objects.select_related(
+            "order",
+            "order__customer",
+            "order__customer__user"
+        ).prefetch_related("items__product"),
+        id=suborder_id,
+        producer=request.user
+    )
+
+    return render(request, "marketplace/producer_order_detail.html", {
+        "suborder": suborder
+    })
