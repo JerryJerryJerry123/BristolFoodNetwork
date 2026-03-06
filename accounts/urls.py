@@ -17,4 +17,8 @@ urlpatterns = [
         ),
         name='logout'
     ),
+    # Payments and Producer Weekly Settlement Payments
+    path('payments/',  views.payments, name='payments'),
+    path('payments/weekly_settlement_payments/',  views.producer_weekly_settlement_payments, name='producer_weekly_settlement_payments'),
+
 ]
