@@ -57,7 +57,10 @@
             {% if user.producerprofile %}
                 <a href="/marketplace/product/new/">Add Product</a>
             {% endif %}
-
+            {% if user.customerprofile %}
+                <a href="{% url 'order_history' %}">My Orders</a>
+                <a href="/marketplace/cart/">View Cart</a>
+            {% endif %}
             <form method="post" action="/logout/">
                 {% csrf_token %}
                 <button type="submit">Logout</button>
@@ -66,6 +69,7 @@
             <a href="/login/">Login</a>
             <a href="/register/">Register</a>
         {% endif %}  
+    
     </div>
 </nav>
 

@@ -321,3 +321,16 @@ def producer_order_detail(request, suborder_id):
     return render(request, "marketplace/producer_order_detail.html", {
         "suborder": suborder
     })
+
+@login_required
+def order_history(request):
+    # Get the customer profile for the logged-in user
+    customer_profile = CustomerProfile.objects.get(user=request.user)
+
+    # Get all orders for this customer, most recent first
+    orders = Order.objects.filter(customer=customer_profile).order_by('-created_at')
+
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'marketplace/order_history.html', context)

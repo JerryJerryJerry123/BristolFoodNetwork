@@ -8,7 +8,8 @@ from .views import (create_product,
                     update_cart_item,
                     checkout,
                     producer_orders,
-                    producer_order_detail)
+                    producer_order_detail,
+                    order_history)
 
 urlpatterns = [
     path('product/new/', create_product, name='create_product'),
@@ -25,4 +26,5 @@ urlpatterns = [
     path('producer/orders/', producer_orders, name='producer_orders'),
 
     path('producer/orders/<int:suborder_id>/',producer_order_detail,name='producer_order_detail'),
+    path('orders/', order_history, name='order_history'),
 ]
