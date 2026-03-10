@@ -213,6 +213,16 @@ def checkout(request):
                 return render(request, "marketplace/checkout.html", {
                     "cart": cart
                 })
+        
+        # -----------------------------
+        # STOCK VALIDATION
+        # -----------------------------
+        for item in cart_items:
+            if item.quantity > item.product.quantity:
+                messages.error(request, f"Not enough stock for {item.product.name}")
+                return render(request, "marketplace/checkout.html", {
+                    "cart": cart
+                })
 
         # -----------------------------
         # CREATE ORDER
@@ -257,11 +267,16 @@ def checkout(request):
             subtotal = 0
 
             for item in items:
+
                 OrderItem.objects.create(
                     suborder=suborder,
                     product=item.product,
                     quantity=item.quantity
                 )
+
+                item.product.quantity -= item.quantity
+                item.product.save()
+
                 subtotal += item.line_total
 
             suborder.subtotal = subtotal

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Orders - Bristol Food Network</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:40px 20px;
+        }
+
+        .order-card{
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            width:500px;
+            margin:20px auto;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+        <a href="/marketplace/orders/">My Orders</a>
+    </div>
+</nav>
+
+<div class="container">
+
+<h1>My Orders</h1>
+
+{% for order in orders %}
+
+<div class="order-card">
+
+    <strong>Order #{{ order.id }}</strong><br>
+    Order Date: {{ order.created_at }}<br>
+    Total Amount: £{{ order.total_amount }}
+
+</div>
+
+{% empty %}
+
+<p>You have no orders yet.</p>
+
+{% endfor %}
+
+</div>
+
+</body>
+</html>
