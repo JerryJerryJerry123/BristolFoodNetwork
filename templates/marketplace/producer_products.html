@@ -1,0 +1,28 @@
+<h1>Product Management Dashboard</h1>
+
+<a href="/marketplace/">
+    <button style="margin-bottom:20px;">⬅ Back to Marketplace</button>
+</a>
+
+<table border="1" style="margin:auto;">
+<tr>
+    <th>Product</th>
+    <th>Stock</th>
+    <th>Status</th>
+    <th>Edit</th>
+</tr>
+
+{% for product in products %}
+<tr>
+    <td>{{ product.name }}</td>
+    <td>{{ product.quantity }} {{ product.unit }}</td>
+    <td>{{ product.get_status_display }}</td>
+    <td>
+        <a href="{% url 'edit_product' product.id %}">
+            <button>Edit / Update Stock</button>
+        </a>
+    </td>
+</tr>
+{% endfor %}
+
+</table>

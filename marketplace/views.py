@@ -51,7 +51,7 @@ def marketplace_home(request):
 
     q = request.GET.get("q", "").strip()
 
-    products = Product.objects.all().select_related("category", "producer").order_by("-created_at")
+    products = Product.objects.filter(quantity__gt=0).select_related("category", "producer").order_by("-created_at")
 
     if q:
         products = products.filter(
@@ -349,3 +349,35 @@ def order_history(request):
         'orders': orders,
     }
     return render(request, 'marketplace/order_history.html', context)
+
+@login_required
+def producer_products(request):
+
+    if not hasattr(request.user, "producerprofile"):
+        return redirect("/")
+
+    products = Product.objects.filter(producer=request.user)
+
+    return render(request, "marketplace/producer_products.html", {
+        "products": products
+    })
+
+@login_required
+def edit_product(request, product_id):
+
+    product = get_object_or_404(Product, id=product_id, producer=request.user)
+
+    if request.method == "POST":
+
+        product.quantity = request.POST.get("quantity")
+        product.status = request.POST.get("status")
+
+        product.save()
+
+        messages.success(request, "Product updated successfully")
+
+        return redirect("producer_products")
+
+    return render(request, "marketplace/edit_product.html", {
+        "product": product
+    })
