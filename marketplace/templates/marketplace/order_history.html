@@ -108,12 +108,12 @@
                             </ul>
                         </div>
                     {% endfor %}
+                    <a href="{% url 'reorder' order.id %}" class="btn">Reorder</a>
                 </div>
             {% endfor %}
         {% else %}
             <p>You have no orders yet.</p>
         {% endif %}
-
         <a href="/" class="btn back">Back to Marketplace</a>
     </div>
 </body>

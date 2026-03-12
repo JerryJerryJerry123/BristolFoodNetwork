@@ -349,3 +349,38 @@ def order_history(request):
         'orders': orders,
     }
     return render(request, 'marketplace/order_history.html', context)
+
+@login_required
+def reorder(request, order_id):
+
+    if not hasattr(request.user, "customerprofile"):
+        return redirect("/")
+
+    order = get_object_or_404(
+        Order.objects.prefetch_related(
+            "suborders__items__product"
+        ),
+        id=order_id,
+        customer=request.user.customerprofile
+    )
+
+    cart = _get_customer_cart(request.user)
+
+    for suborder in order.suborders.all():
+        for item in suborder.items.all():
+
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=item.product
+            )
+
+            if created:
+                cart_item.quantity = item.quantity
+            else:
+                cart_item.quantity += item.quantity
+
+            cart_item.save()
+
+    messages.success(request, "Items have been added to your cart for reorder.")
+
+    return redirect("view_cart")
