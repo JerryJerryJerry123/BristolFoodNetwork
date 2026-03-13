@@ -7,9 +7,9 @@ from datetime import timedelta
 class Product(models.Model):
 
     STATUS_CHOICES = [
-        ('seasonal', 'Seasonal'),
-        ('non_seasonal', 'Non Seasonal'),
-        ('all_year', 'All Year'),
+        ('in_season', 'In Season'),
+        ('out_of_season', 'Out of Season'),
+        ('unavailable', 'Unavailable'),
     ]
 
     producer = models.ForeignKey(User, on_delete=models.CASCADE)
