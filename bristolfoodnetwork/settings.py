@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts.apps.AccountsConfig',
+    # 'accounts.apps.AccountsConfig',
+
+    'accounts',
     'marketplace',
 ]
 
@@ -79,11 +81,11 @@ WSGI_APPLICATION = 'bristolfoodnetwork.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bristol_food_network',
+        'NAME': 'bfn_db',
         'USER': 'root',
-        'PASSWORD': 'django_pass',
-        'HOST': '127.0.0.1',
-        'PORT': '3307',
+        'PASSWORD': '1324321',
+        'HOST': 'bfn_mysql',      
+        'PORT': '3306',
     }
 }
 

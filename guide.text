@@ -1,0 +1,4 @@
+Change Line 6 of docker-compose.yml
+Change Line 86 of settings.py
+
+docker compose exec bfn_django python manage.py migrate
