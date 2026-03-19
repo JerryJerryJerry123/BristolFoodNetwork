@@ -93,6 +93,11 @@ class Order(models.Model):
 
 
 class SubOrder(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('delivered', 'Delivered'),
+    ]
+    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="suborders")
     producer = models.ForeignKey(User, on_delete=models.CASCADE)
     delivery_date = models.DateField()
@@ -109,6 +114,8 @@ class SubOrder(models.Model):
 
     def __str__(self):
         return f"SubOrder #{self.id} - {self.producer.username}"
+    
+
 
 
 class OrderItem(models.Model):
@@ -122,3 +129,20 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    customer = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
+
+    rating = models.IntegerField()  # 1–5
+    title = models.CharField(max_length=255)
+    text = models.TextField()
+
+    created_at = models.DateTimeField(default=timezone.now)
+
+    # Important for case study (step 15/16)
+    class Meta:
+        unique_together = ("product", "customer")
+
+    def __str__(self):
+        return f"{self.product.name} - {self.rating}"

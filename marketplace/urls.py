@@ -11,7 +11,8 @@ from .views import (create_product,
                     producer_order_detail,
                     order_history,
                     producer_products,
-                    edit_product)
+                    edit_product,
+                    write_review)
 
 urlpatterns = [
     path('product/new/', create_product, name='create_product'),
@@ -32,4 +33,6 @@ urlpatterns = [
 
     path("producer/products/", producer_products, name="producer_products"),
     path("producer/products/<int:product_id>/edit/", edit_product, name="edit_product"),
+
+    path("product/<int:product_id>/review/", write_review, name="write_review"),
 ]

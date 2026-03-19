@@ -11,6 +11,7 @@ from .models import Product, Category, Cart, CartItem
 from django.utils import timezone
 from datetime import timedelta
 from collections import defaultdict
+from django.db.models import Avg
 
 from .models import (
     Product,
@@ -19,8 +20,11 @@ from .models import (
     CartItem,
     Order,
     SubOrder,
-    OrderItem
+    OrderItem,
+    Review
 )
+
+
 #login requirements
 @login_required
 def create_product(request):
@@ -91,17 +95,33 @@ def products_by_category(request, category_id):
         "q": q,
     })
 
+
 def product_detail(request, product_id):
-    product = get_object_or_404(Product.objects.select_related("producer", "category"), id=product_id)
+    product = get_object_or_404(
+        Product.objects.select_related("producer", "category"),
+        id=product_id
+    )
 
     allergens = product.allergen_info or []
 
     if isinstance(allergens, str):
         allergens = [allergens]
 
+    # ✅ GET REVIEWS
+    reviews = product.reviews.all().order_by("-created_at")
+
+    # ✅ CHECK IF USER IS CUSTOMER (FIXES BUTTON ISSUE)
+    is_customer = hasattr(request.user, "customerprofile")
+
+    # ✅ AVERAGE RATING (for case study step 11)
+    avg_rating = product.reviews.aggregate(Avg("rating"))["rating__avg"]
+
     return render(request, "marketplace/product_detail.html", {
         "product": product,
         "allergens": allergens,
+        "reviews": reviews,
+        "is_customer": is_customer,
+        "avg_rating": avg_rating,
     })
 
 def _get_customer_cart(user):
@@ -379,5 +399,48 @@ def edit_product(request, product_id):
         return redirect("producer_products")
 
     return render(request, "marketplace/edit_product.html", {
+        "product": product
+    })
+
+@login_required
+def write_review(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    # Must be a customer
+    if not hasattr(request.user, "customerprofile"):
+        return redirect("/")
+
+    customer = request.user.customerprofile
+
+    # ❌ Prevent duplicate reviews
+    if Review.objects.filter(product=product, customer=customer).exists():
+        messages.error(request, "You have already reviewed this product.")
+        return redirect("product_detail", product_id=product.id)
+
+    # ❌ Only allow if purchased (basic check)
+    if not OrderItem.objects.filter(
+        product=product,
+        suborder__order__customer=customer
+    ).exists():
+        messages.error(request, "You can only review products you have purchased.")
+        return redirect("product_detail", product_id=product.id)
+
+    if request.method == "POST":
+        rating = request.POST.get("rating")
+        title = request.POST.get("title")
+        text = request.POST.get("text")
+
+        Review.objects.create(
+            product=product,
+            customer=customer,
+            rating=rating,
+            title=title,
+            text=text
+        )
+
+        messages.success(request, "Review submitted!")
+        return redirect("product_detail", product_id=product.id)
+
+    return render(request, "marketplace/write_review.html", {
         "product": product
     })

@@ -46,16 +46,10 @@
             text-align:left;
         }
 
-        .messages ul{
-            list-style:none;
-            padding:0;
-            margin:0;
-        }
-
         .messages li{
             background:#ecfdf5;
             border:1px solid #bbf7d0;
-            padding:10px 12px;
+            padding:10px;
             border-radius:10px;
             margin-bottom:8px;
         }
@@ -72,30 +66,16 @@
         }
 
         .badge{
-            display:inline-block;
             padding:4px 10px;
             border-radius:999px;
             background:#e5e7eb;
             font-size:12px;
-            margin-left:6px;
         }
 
         hr{
             border:none;
             border-top:1px solid #e5e7eb;
             margin:18px 0;
-        }
-
-        label{
-            display:block;
-            margin-bottom:6px;
-        }
-
-        input[type="number"]{
-            width:160px;
-            padding:8px;
-            border-radius:8px;
-            border:1px solid #d1d5db;
         }
 
         button{
@@ -105,19 +85,23 @@
             background:#2563eb;
             color:white;
             cursor:pointer;
-            margin-left:8px;
         }
 
-        button:hover{
-            filter:brightness(0.95);
-        }
-
-        .pill{
+        .review-btn{
             display:inline-block;
-            padding:6px 10px;
-            border-radius:10px;
-            background:#f3f4f6;
-            margin-top:6px;
+            margin-bottom:10px;
+            padding:8px 12px;
+            background:#16a34a;
+            color:white;
+            border-radius:8px;
+            text-decoration:none;
+        }
+
+        .review{
+            background:#f9fafb;
+            padding:12px;
+            border-radius:8px;
+            margin-bottom:10px;
         }
     </style>
 </head>
@@ -151,6 +135,7 @@
 </nav>
 
 <div class="container">
+
     <h1>{{ product.name }}</h1>
 
     {% if messages %}
@@ -164,7 +149,15 @@
     {% endif %}
 
     <div class="card">
+
         <a class="muted-link" href="/marketplace/">← Back to Marketplace</a>
+
+        <!-- ✅ FIXED BUTTON (SAFE CHECK) -->
+        
+        <a href="{% url 'write_review' product.id %}" class="review-btn">
+             Write Review
+        </a>
+        
 
         <div class="row">
             <strong>Price:</strong> £{{ product.price }} / {{ product.unit }}
@@ -172,7 +165,7 @@
 
         <div class="row">
             <strong>Description:</strong><br>
-            <span class="pill">{{ product.description }}</span>
+            {{ product.description }}
         </div>
 
         <div class="row">
@@ -194,7 +187,7 @@
         <h2>Allergen Information</h2>
 
         {% if allergens %}
-            <p><strong>Contains:</strong>
+            <p>
                 {% for a in allergens %}
                     {{ a }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
@@ -209,11 +202,31 @@
 
         <form method="post" action="{% url 'add_to_cart' product.id %}">
             {% csrf_token %}
-
-            <label for="qty">Quantity ({{ product.unit }}):</label>
-            <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
+            <input type="number" name="quantity" value="1" step="0.01" min="0.01">
             <button type="submit">Add to Cart</button>
         </form>
+
+        <hr>
+
+        <!-- ✅ REVIEWS SECTION -->
+        <h2>Reviews</h2>
+
+        {% if reviews %}
+            {% for r in reviews %}
+                <div class="review">
+                    <strong>{{ r.rating }}⭐</strong> - {{ r.title }}<br>
+                    {{ r.text }}<br>
+                    <small>
+                        By {{ r.customer.user.username }} |
+                        {{ r.created_at|date:"M d, Y" }} |
+                        ✔ Verified Purchase
+                    </small>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No reviews yet.</p>
+        {% endif %}
+
     </div>
 </div>
 

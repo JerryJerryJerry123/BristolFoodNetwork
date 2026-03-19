@@ -82,8 +82,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'bfn_db',
-        'USER': 'root',
-        'PASSWORD': '1324321',
+        'USER': 'bfn_user',
+        'PASSWORD': 'bfn_password',
         'HOST': 'bfn_mysql',      
         'PORT': '3306',
     }
