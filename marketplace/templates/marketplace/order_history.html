@@ -99,7 +99,7 @@
                         <div class="suborder">
                             <h4>Producer: {{ suborder.producer.username }}</h4>
                             <p>Delivery Date: {{ suborder.delivery_date }}</p>
-                            <p class="total">Subtotal: £{{ suborder.subtotal }}</p>
+                            <p class="total">Subtotal: £{{ suborder.total }}</p>  {# <-- use total property #}
 
                             <ul>
                                 {% for item in suborder.items.all %}

@@ -51,7 +51,7 @@ def marketplace_home(request):
 
     q = request.GET.get("q", "").strip()
 
-    products = Product.objects.all().select_related("category", "producer").order_by("-created_at")
+    products = Product.objects.filter(quantity__gt=0).select_related("category", "producer").order_by("-created_at")
 
     if q:
         products = products.filter(
@@ -343,7 +343,10 @@ def order_history(request):
     customer_profile = CustomerProfile.objects.get(user=request.user)
 
     # Get all orders for this customer, most recent first
-    orders = Order.objects.filter(customer=customer_profile).order_by('-created_at')
+    # Prefetch suborders, their items, and each item's product
+    orders = Order.objects.filter(customer=customer_profile).prefetch_related(
+        'suborders__items__product'
+    ).order_by('-created_at')
 
     context = {
         'orders': orders,
@@ -351,36 +354,33 @@ def order_history(request):
     return render(request, 'marketplace/order_history.html', context)
 
 @login_required
-def reorder(request, order_id):
+def producer_products(request):
 
-    if not hasattr(request.user, "customerprofile"):
+    if not hasattr(request.user, "producerprofile"):
         return redirect("/")
 
-    order = get_object_or_404(
-        Order.objects.prefetch_related(
-            "suborders__items__product"
-        ),
-        id=order_id,
-        customer=request.user.customerprofile
-    )
+    products = Product.objects.filter(producer=request.user)
 
-    cart = _get_customer_cart(request.user)
+    return render(request, "marketplace/producer_products.html", {
+        "products": products
+    })
 
-    for suborder in order.suborders.all():
-        for item in suborder.items.all():
+@login_required
+def edit_product(request, product_id):
 
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=item.product
-            )
+    product = get_object_or_404(Product, id=product_id, producer=request.user)
 
-            if created:
-                cart_item.quantity = item.quantity
-            else:
-                cart_item.quantity += item.quantity
+    if request.method == "POST":
 
-            cart_item.save()
+        product.quantity = request.POST.get("quantity")
+        product.status = request.POST.get("status")
 
-    messages.success(request, "Items have been added to your cart for reorder.")
+        product.save()
 
-    return redirect("view_cart")
+        messages.success(request, "Product updated successfully")
+
+        return redirect("producer_products")
+
+    return render(request, "marketplace/edit_product.html", {
+        "product": product
+    })
