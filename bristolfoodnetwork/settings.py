@@ -1,5 +1,5 @@
-import pymysql
-pymysql.install_as_MySQLdb()
+#import pymysql
+#pymysql.install_as_MySQLdb()
 """
 Django settings for config project.
 
@@ -39,9 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'accounts.apps.AccountsConfig',
-
-    'accounts',
+    'accounts.apps.AccountsConfig',
     'marketplace',
 ]
 
@@ -81,6 +79,7 @@ WSGI_APPLICATION = 'bristolfoodnetwork.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+<<<<<<< HEAD
         'NAME': 'bfn_db',
         'USER': 'bfn_user',
         'PASSWORD': 'bfn_password',

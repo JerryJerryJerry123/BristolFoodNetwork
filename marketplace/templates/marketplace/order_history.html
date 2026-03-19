@@ -82,7 +82,7 @@
         <div>Bristol Food Network</div>
         <div>
             <a href="/">Home</a>
-            <a href="/orders/">My Orders</a>
+            <a href="{% url 'order_history' %}">My Orders</a>
         </div>
     </nav>
 
@@ -99,7 +99,7 @@
                         <div class="suborder">
                             <h4>Producer: {{ suborder.producer.username }}</h4>
                             <p>Delivery Date: {{ suborder.delivery_date }}</p>
-                            <p class="total">Subtotal: £{{ suborder.subtotal }}</p>
+                            <p class="total">Subtotal: £{{ suborder.total }}</p>  {# <-- use total property #}
 
                             <ul>
                                 {% for item in suborder.items.all %}
@@ -108,12 +108,12 @@
                             </ul>
                         </div>
                     {% endfor %}
+                    <a href="{% url 'reorder' order.id %}" class="btn">Reorder</a>
                 </div>
             {% endfor %}
         {% else %}
             <p>You have no orders yet.</p>
         {% endif %}
-
         <a href="/" class="btn back">Back to Marketplace</a>
     </div>
 </body>

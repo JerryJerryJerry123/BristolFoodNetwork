@@ -1,7 +1,101 @@
-<h2>Create Product</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Product - Bristol Food Network</title>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">List Product</button>
-</form>
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            padding:40px 20px;
+        }
+
+        .card{
+            background:white;
+            padding:25px;
+            border-radius:10px;
+            max-width:500px;
+            margin:auto;
+            text-align:left;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        input, select, textarea{
+            width:100%;
+            padding:8px;
+            margin-top:6px;
+            margin-bottom:12px;
+            border-radius:6px;
+            border:1px solid #d1d5db;
+            font-size:14px;
+        }
+
+        button{
+            background:#2563eb;
+            color:white;
+            border:none;
+            padding:10px 16px;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:14px;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+
+        {% if user.customerprofile %}
+            <a href="/marketplace/cart/">View Cart</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="container">
+
+    <h1>Create Product</h1>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit">List Product</button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

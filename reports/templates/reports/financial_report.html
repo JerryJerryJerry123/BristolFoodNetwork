@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bristol Food Network - Financial Report</title>
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+
+        .container{
+            max-width:900px;
+            margin: 40px auto;
+            text-align:left;
+            padding:0 20px;
+        }
+
+        .order{
+            background:white;
+            border-radius:8px;
+            padding:20px;
+            margin-bottom:20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .suborder{
+            background:#f0f0f0;
+            border-radius:6px;
+            padding:15px;
+            margin-top:10px;
+            margin-left:20px;
+        }
+
+        h1,h3,h4{
+            margin:0 0 10px 0;
+        }
+
+        ul{
+            padding-left:20px;
+        }
+
+        .total{
+            font-weight:bold;
+        }
+
+        .btn{
+            display:inline-block;
+            padding:14px 24px;
+            margin:15px 0;
+            border-radius:8px;
+            text-decoration:none;
+            color:white;
+            background:#2563eb;
+        }
+
+        .btn.back{
+            background:#16a34a;
+        }
+
+        form input[type="date"]{
+            padding:5px 10px;
+            margin-right:10px;
+        }
+
+        form input[type="submit"]{
+            padding:6px 14px;
+            background:#2563eb;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+    <div>
+        <a href="/" class="btn back">Home</a>
+        <a href="?export=csv" class="btn">Download CSV</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Financial Report</h1>
+
+    <!-- Date filter form -->
+    <form method="get">
+        <label>Start Date: <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}"></label>
+        <label>End Date: <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}"></label>
+        <input type="submit" value="Generate Report">
+    </form>
+
+    <p class="total">Period: {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}</p>
+    <p class="total">Total Orders: {{ num_orders }}</p>
+    <p class="total">Total Order Value: £{{ total_value }}</p>
+    <p class="total">Total Commission (5%): £{{ total_commission }}</p>
+    <p class="total">Year-to-Date Commission: £{{ ytd_commission }}</p>
+
+    <hr>
+
+    {% for o in orders %}
+    <div class="order">
+        <h3>Order #{{ o.order.id }} - Total: £{{ o.total }} | Commission: £{{ o.commission }}</h3>
+        {% for s in o.suborders %}
+        <div class="suborder">
+            <h4>Producer: {{ s.producer }}</h4>
+            <ul>
+                <li>SubOrder Total: £{{ s.subtotal }}</li>
+                <li>Producer Payment: £{{ s.producer_payment }}</li>
+                <li>Delivery Date: {{ s.delivery_date }}</li>
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+</div>
+
+</body>
+</html>

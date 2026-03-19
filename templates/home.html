@@ -54,6 +54,10 @@
     <div>
         <a href="/">Home</a>
         {% if user.is_authenticated %}
+            {% if user.is_staff %}
+                <a href="{% url 'financial_report' %}">Financial Reports</a>
+            {% endif %}
+
             {% if user.producerprofile %}
                 <a href="/marketplace/product/new/">Add Product</a>
             {% endif %}
