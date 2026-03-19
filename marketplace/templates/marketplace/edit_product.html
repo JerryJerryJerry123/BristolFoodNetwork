@@ -1,3 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            background:#f7f7f7;
+            text-align:center;
+        }
+
+        h1{
+            margin-top:40px;
+        }
+
+        form{
+            background:white;
+            max-width:400px;
+            margin:30px auto;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+            text-align:left;
+        }
+
+        label{
+            display:block;
+            margin-bottom:6px;
+            font-weight:600;
+        }
+
+        input, select{
+            width:100%;
+            padding:10px;
+            border-radius:8px;
+            border:1px solid #d1d5db;
+            box-sizing:border-box;
+            margin-bottom:10px;
+        }
+
+        input:focus, select:focus{
+            border-color:#2563eb;
+            outline:none;
+        }
+
+        button{
+            width:100%;
+            padding:10px;
+            border:none;
+            border-radius:8px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
+            margin-top:10px;
+        }
+
+        button:hover{
+            filter:brightness(0.95);
+        }
+    </style>
+</head>
+
+<body>
+    
 <h1>Edit Product</h1>
 
 <form method="post">
@@ -7,16 +72,34 @@
 <input type="number" name="quantity" value="{{ product.quantity }}"><br><br>
 
 <label>Status</label><br>
+
 <select name="status">
-
-<option value="seasonal">Seasonal</option>
-<option value="non_seasonal">Non Seasonal</option>
-<option value="all_year">All Year</option>
-
+    <option value="seasonal" {% if product.status == "seasonal" %}selected{% endif %}>Seasonal</option>
+    <option value="non_seasonal" {% if product.status == "non_seasonal" %}selected{% endif %}>Non Seasonal</option>
+    <option value="all_year" {% if product.status == "all_year" %}selected{% endif %}>All Year</option>
 </select>
 
 <br><br>
 
+<label>Season Start Month</label><br>
+<select name="season_start_month">
+    <option value="">-- Select Month --</option>
+    <option value="June" {% if product.season_start_month == "June" %}selected{% endif %}>June</option>
+    <option value="July" {% if product.season_start_month == "July" %}selected{% endif %}>July</option>
+    <option value="August" {% if product.season_start_month == "August" %}selected{% endif %}>August</option>
+</select>
+
+<label>Season End Month</label><br>
+<select name="season_end_month">
+    <option value="">-- Select Month --</option>
+    <option value="June" {% if product.season_end_month == "June" %}selected{% endif %}>June</option>
+    <option value="July" {% if product.season_end_month == "July" %}selected{% endif %}>July</option>
+    <option value="August" {% if product.season_end_month == "August" %}selected{% endif %}>August</option>
+</select>
+
 <button type="submit">Save Changes</button>
 
 </form>
+
+</body>
+</html>

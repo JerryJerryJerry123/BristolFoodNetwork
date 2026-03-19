@@ -339,11 +339,9 @@ def producer_order_detail(request, suborder_id):
 
 @login_required
 def order_history(request):
-    # Get the customer profile for the logged-in user
+
     customer_profile = CustomerProfile.objects.get(user=request.user)
 
-    # Get all orders for this customer, most recent first
-    # Prefetch suborders, their items, and each item's product
     orders = Order.objects.filter(customer=customer_profile).prefetch_related(
         'suborders__items__product'
     ).order_by('-created_at')
@@ -374,6 +372,12 @@ def edit_product(request, product_id):
 
         product.quantity = request.POST.get("quantity")
         product.status = request.POST.get("status")
+        product.season_start_month = request.POST.get("season_start_month", "").strip()
+        product.season_end_month = request.POST.get("season_end_month", "").strip()
+
+        if product.status == "all_year":
+            product.season_start_month = ""
+            product.season_end_month = ""
 
         product.save()
 
@@ -384,3 +388,38 @@ def edit_product(request, product_id):
     return render(request, "marketplace/edit_product.html", {
         "product": product
     })
+
+@login_required
+def reorder(request, order_id):
+    if not hasattr(request.user, "customerprofile"):
+        return redirect("/")
+
+    order = get_object_or_404(
+        Order.objects.prefetch_related("suborders__items__product"),
+        id=order_id,
+        customer=request.user.customerprofile
+    )
+
+    cart = _get_customer_cart(request.user)
+
+    for suborder in order.suborders.all():
+        for item in suborder.items.all():
+            product = item.product
+
+            if product.quantity <= 0:
+                continue
+
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product
+            )
+
+            if created:
+                cart_item.quantity = item.quantity
+            else:
+                cart_item.quantity += item.quantity
+
+            cart_item.save()
+
+    messages.success(request, "Previous order added to cart.")
+    return redirect("view_cart")

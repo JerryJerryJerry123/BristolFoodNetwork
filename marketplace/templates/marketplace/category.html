@@ -129,7 +129,16 @@
                 {% endif %}
                 <br>
 
-                <span class="badge">Availability: {{ p.get_status_display }}</span>
+                {% if p.status == "seasonal" %}
+                    <span class="badge">In Season</span><br>
+                    {% if p.season_start_month and p.season_end_month %}
+                        <small>Available: {{ p.season_start_month }} - {{ p.season_end_month }}</small>
+                    {% endif %}
+                {% elif p.status == "all_year" %}
+                    <span class="badge">Available Year-Round</span>
+                {% else %}
+                    <span class="badge">Out of Season</span>
+                {% endif %}                
             </div>
         {% empty %}
             <p>No products in this category yet.</p>
