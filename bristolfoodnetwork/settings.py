@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     'accounts',
     'marketplace',
+    'reports'
 ]
 
 MIDDLEWARE = [
@@ -81,11 +82,11 @@ WSGI_APPLICATION = 'bristolfoodnetwork.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bfn_db',
+        'NAME': 'bristol_food_network',
         'USER': 'root',
-        'PASSWORD': '1324321',
-        'HOST': 'bfn_mysql',      
-        'PORT': '3306',
+        'PASSWORD': 'django_pass',
+        'HOST': '127.0.0.1',      
+        'PORT': '3307',
     }
 }
 

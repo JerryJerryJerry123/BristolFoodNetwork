@@ -3,7 +3,7 @@ services:
     image: mysql:8.0
     container_name: bfn_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: 1324321 #Change this to ur password
+      MYSQL_ROOT_PASSWORD: django_pass #Change this to ur password
       MYSQL_DATABASE: bfn_db
       MYSQL_USER: bfn_user
       MYSQL_PASSWORD: bfn_password

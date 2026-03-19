@@ -9,4 +9,5 @@ urlpatterns = [
     path('', views.home, name='home'),
     #accounts
     path('', include('accounts.urls')),
+    path('', include('reports.urls'))
 ]

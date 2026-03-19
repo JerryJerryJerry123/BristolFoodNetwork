@@ -343,7 +343,10 @@ def order_history(request):
     customer_profile = CustomerProfile.objects.get(user=request.user)
 
     # Get all orders for this customer, most recent first
-    orders = Order.objects.filter(customer=customer_profile).order_by('-created_at')
+    # Prefetch suborders, their items, and each item's product
+    orders = Order.objects.filter(customer=customer_profile).prefetch_related(
+        'suborders__items__product'
+    ).order_by('-created_at')
 
     context = {
         'orders': orders,
