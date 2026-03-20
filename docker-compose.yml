@@ -3,10 +3,12 @@ services:
     image: mysql:8.0
     container_name: bfn_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: django_pass #Change this to ur password
+      MYSQL_ROOT_PASSWORD: 1324321
       MYSQL_DATABASE: bfn_db
       MYSQL_USER: bfn_user
       MYSQL_PASSWORD: bfn_password
+    volumes:
+      - bfn_db_data:/var/lib/mysql
     ports:
       - "3307:3306"
     healthcheck:
@@ -26,3 +28,6 @@ services:
     environment:
       - DJANGO_DB_HOST=bfn_mysql
       - DJANGO_DB_PORT=3306
+      
+volumes:
+  bfn_db_data:

@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'bristolfoodnetwork.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-<<<<<<< HEAD
+# <<<<<<< HEAD
         'NAME': 'bfn_db',
         'USER': 'bfn_user',
         'PASSWORD': 'bfn_password',
@@ -97,6 +97,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',

@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from .forms import ProducerRegistrationForm, CustomerRegistrationForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 def register(request):
     if request.method == "POST":
@@ -17,11 +19,23 @@ def register(request):
 def register_producer(request):
     if request.method == 'POST':
         form = ProducerRegistrationForm(request.POST)
+
         if form.is_valid():
+            password=form.cleaned_data['password']
+
+            # Validate password
+            try:
+                validate_password(password)
+            except ValidationError as e:
+                form.add_error('password', e)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': 'producer'
+                })
             user = User.objects.create_user(
                 username=form.cleaned_data['username'],
                 email=form.cleaned_data['email'],
-                password=form.cleaned_data['password']
+                password=password
             )
 
             profile = form.save(commit=False)
@@ -42,10 +56,22 @@ def register_customer(request):
     if request.method == 'POST':
         form = CustomerRegistrationForm(request.POST)
         if form.is_valid():
+            password = form.cleaned_data['password']
+
+            # Validate password
+            try:
+                validate_password(password)
+            except ValidationError as e:
+                form.add_error('password', e)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': 'customer'
+                })
+
             user = User.objects.create_user(
                 username=form.cleaned_data['username'],
                 email=form.cleaned_data['email'],
-                password=form.cleaned_data['password']
+                password=password
             )
 
             profile = form.save(commit=False)

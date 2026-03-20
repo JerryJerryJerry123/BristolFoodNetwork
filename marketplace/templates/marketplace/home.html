@@ -125,6 +125,7 @@
                 <a href="/marketplace/product/new/">Add Product</a>
                 <a href="/marketplace/producer/orders/">My Orders</a>
                 <a href="/marketplace/producer/products/">My Products</a>
+                <a href="/payments">Payments</a>
             {% endif %}
             {% if user.customerprofile %}
                 <a href="/marketplace/cart/">View Cart</a>
@@ -132,7 +133,7 @@
 
             <form method="post" action="/logout/" style="display:inline;">
                 {% csrf_token %}
-                <button type="submit">Logout</button>
+                <a href=""><button type="submit">Logout</button></a>
             </form>
         {% else %}
             <a href="/login/">Login</a>
