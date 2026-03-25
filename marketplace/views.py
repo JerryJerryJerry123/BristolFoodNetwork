@@ -485,3 +485,55 @@ def reorder(request, order_id):
 
     messages.success(request, "Previous order added to cart.")
     return redirect("view_cart")
+
+@login_required
+def update_suborder_status(request, suborder_id):
+    suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+    # Ensure only the producer can update it
+    if suborder.producer != request.user:
+        return redirect('producer_orders')
+
+    if request.method == "POST":
+        new_status = request.POST.get("status")
+        if new_status in dict(SubOrder.STATUS_CHOICES):
+            suborder.status = new_status
+            suborder.save()
+
+    return redirect('producer_orders')
+
+from accounts.models import Notification
+
+@login_required
+def mark_ready(request, suborder_id):
+    suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+    if suborder.producer != request.user:
+        return redirect('producer_orders')
+
+    if request.method == "POST":
+        if suborder.status == "pending":
+            suborder.status = "ready"
+            suborder.save()
+
+            # 🔔 CREATE NOTIFICATION
+            Notification.objects.create(
+                customer=suborder.order.customer,
+                message=f"Your order #{suborder.order.id} is ready for delivery!"
+            )
+
+    return redirect('producer_orders')
+
+@login_required
+def mark_delivered(request, suborder_id):
+    suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+    if suborder.producer != request.user:
+        return redirect('producer_orders')
+
+    if request.method == "POST":
+        if suborder.status == "ready":
+            suborder.status = "delivered"
+            suborder.save()
+
+    return redirect('producer_orders')

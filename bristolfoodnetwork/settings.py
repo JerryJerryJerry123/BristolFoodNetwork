@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
     'marketplace',
+    'reports'
 ]
 
 MIDDLEWARE = [
@@ -80,11 +81,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
 # <<<<<<< HEAD
-        'NAME': 'bfn_db',
-        'USER': 'bfn_user',
-        'PASSWORD': 'bfn_password',
-        'HOST': 'bfn_mysql',      
-        'PORT': '3306',
+        'NAME': 'bristol_food_network',
+        'USER': 'root',
+        'PASSWORD': 'django_pass',
+        'HOST': '127.0.0.1',      
+        'PORT': '3307',
     }
 }
 

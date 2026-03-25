@@ -116,6 +116,35 @@
             <strong>Total:</strong>
             £{{ suborder.total|floatformat:2 }}
         </div>
+        <div class="section">
+            <strong>Status:</strong>
+
+            <span class="badge">
+                {% if suborder.status == "pending" %}
+                    🟡 Pending
+                {% elif suborder.status == "ready" %}
+                    🟠 Ready for Delivery
+                {% elif suborder.status == "delivered" %}
+                    🟢 Delivered
+                {% endif %}
+            </span>
+        </div>
+        {% if suborder.status == "pending" %}
+            <form method="post" action="{% url 'mark_ready' suborder.id %}">
+                {% csrf_token %}
+                <button type="submit" style="margin-top:10px;">
+                    Mark as Ready for Delivery
+                </button>
+            </form>
+        {% endif %}
+        {% if suborder.status == "ready" %}
+            <form method="post" action="{% url 'mark_delivered' suborder.id %}">
+                {% csrf_token %}
+                <button type="submit">
+                    Mark as Delivered
+                </button>
+            </form>
+        {% endif %}
 
     </div>
 

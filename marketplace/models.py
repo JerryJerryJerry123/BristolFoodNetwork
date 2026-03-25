@@ -99,6 +99,7 @@ class Order(models.Model):
 class SubOrder(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('ready', 'Ready for Delivery'),
         ('delivered', 'Delivered'),
     ]
     
@@ -106,7 +107,11 @@ class SubOrder(models.Model):
     producer = models.ForeignKey(User, on_delete=models.CASCADE)
     delivery_date = models.DateField()
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
     @property
     def total(self):
         return sum(item.line_total for item in self.items.all())

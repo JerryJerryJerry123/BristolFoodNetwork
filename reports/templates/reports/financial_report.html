@@ -107,7 +107,7 @@
     <form method="get">
         <label>Start Date: <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}"></label>
         <label>End Date: <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}"></label>
-        <input type="submit" value="Generate Report">
+        <input type="submit" value="Submit Dates">
     </form>
 
     <p class="total">Period: {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}</p>

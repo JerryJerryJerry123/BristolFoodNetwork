@@ -13,7 +13,10 @@ from .views import (create_product,
                     producer_products,
                     edit_product,
                     write_review,
-                    reorder)
+                    reorder,
+                    update_suborder_status,
+                    mark_ready,
+                    mark_delivered,)
 
 
 urlpatterns = [
@@ -38,4 +41,7 @@ urlpatterns = [
     path("producer/products/<int:product_id>/edit/", edit_product, name="edit_product"),
 
     path("product/<int:product_id>/review/", write_review, name="write_review"),
+    path("producer/orders/<int:suborder_id>/status/", update_suborder_status, name="update_suborder_status"), 
+    path("producer/orders/<int:suborder_id>/ready/",mark_ready,name="mark_ready"),
+    path("producer/orders/<int:suborder_id>/delivered/", mark_delivered, name="mark_delivered"),
 ]

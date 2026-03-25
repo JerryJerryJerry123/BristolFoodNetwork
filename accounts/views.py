@@ -183,3 +183,10 @@ def payments(request):
     
     return render(request, "accounts/payments.html")
 
+@login_required
+def notifications_view(request):
+    notifications = request.user.customerprofile.notifications.order_by('-created_at')
+
+    return render(request, "accounts/notifications.html", {
+        "notifications": notifications
+    })

@@ -21,5 +21,5 @@ urlpatterns = [
     # Payments and Producer Weekly Settlement Payments
     path('payments/',  views.payments, name='payments'),
     path('payments/weekly_settlement_payments/',  views.producer_weekly_settlement_payments, name='producer_weekly_settlement_payments'),
-
+    path("notifications/", views.notifications_view, name="notifications"),
 ]
