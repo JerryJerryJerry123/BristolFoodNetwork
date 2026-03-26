@@ -1,16 +1,135 @@
-<h2>Write Review for {{ product.name }}</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Write Review</title>
 
-<form method="post">
-    {% csrf_token %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            margin: 0;
+            text-align: center;
+        }
 
-    <label>Rating (1–5):</label><br>
-    <input type="number" name="rating" min="1" max="5" required><br><br>
+        nav {
+            background: #1f2937;
+            padding: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+        }
 
-    <label>Title:</label><br>
-    <input type="text" name="title" required><br><br>
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
 
-    <label>Review:</label><br>
-    <textarea name="text" required></textarea><br><br>
+        .container {
+            padding: 40px 20px;
+        }
 
-    <button type="submit">Submit Review</button>
-</form>
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 500px;
+            margin: auto;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .rating {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .rating input {
+            width: auto;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px;
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1e4fd1;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Write Review for {{ product.name }}</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label>Rating</label>
+            <div class="rating">
+                {% for i in "12345" %}
+                    <label>
+                        <input type="radio" name="rating" value="{{ i }}" required>
+                        {{ i }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <label>Title</label>
+            <input type="text" name="title" placeholder="Short summary..." required>
+
+            <label>Review</label>
+            <textarea name="text" placeholder="Write your review..." required></textarea>
+
+            <button type="submit">Submit Review</button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

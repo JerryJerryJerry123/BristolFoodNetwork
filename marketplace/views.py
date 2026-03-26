@@ -9,7 +9,7 @@ from .forms import ProductForm
 from .models import Product, Category, Cart, CartItem
 
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
 from collections import defaultdict
 from django.db.models import Avg
 
@@ -21,7 +21,11 @@ from .models import (
     Order,
     SubOrder,
     OrderItem,
-    Review
+    Review,
+    RecurringOrder,
+    RecurringOrderItem,
+    ScheduledOrder,
+    ScheduledOrderItem,
 )
 
 
@@ -198,6 +202,13 @@ def update_cart_item(request, item_id):
 
     return redirect("view_cart")
 
+def get_next_weekday(target_weekday):
+    today = date.today()
+    days_ahead = target_weekday - today.weekday()
+    if days_ahead <= 0:
+        days_ahead += 7
+    return today + timedelta(days=days_ahead)
+
 @login_required
 def checkout(request):
     if not hasattr(request.user, "customerprofile"):
@@ -212,9 +223,9 @@ def checkout(request):
 
     if request.method == "POST":
 
-        # -----------------------------
+        
         # PAYMENT VALIDATION
-        # -----------------------------
+  
         payment_method = request.POST.get("payment_method")
 
         if not payment_method:
@@ -233,10 +244,10 @@ def checkout(request):
                 return render(request, "marketplace/checkout.html", {
                     "cart": cart
                 })
-        
-        # -----------------------------
+
+    
         # STOCK VALIDATION
-        # -----------------------------
+    
         for item in cart_items:
             if item.quantity > item.product.quantity:
                 messages.error(request, f"Not enough stock for {item.product.name}")
@@ -244,16 +255,15 @@ def checkout(request):
                     "cart": cart
                 })
 
-        # -----------------------------
+  
         # CREATE ORDER
-        # -----------------------------
+ 
         order = Order.objects.create(
             customer=request.user.customerprofile
         )
 
         grouped_items = defaultdict(list)
 
-        # Group items by producer
         for item in cart_items:
             grouped_items[item.product.producer].append(item)
 
@@ -287,7 +297,6 @@ def checkout(request):
             subtotal = 0
 
             for item in items:
-
                 OrderItem.objects.create(
                     suborder=suborder,
                     product=item.product,
@@ -307,7 +316,43 @@ def checkout(request):
         order.total_amount = total_amount
         order.save()
 
-        # Clear cart
+  
+        # RECURRING ORDER 
+ 
+        if request.POST.get("recurring"):
+
+            next_order_date = get_next_weekday(0)  # Monday
+
+            recurring = RecurringOrder.objects.create(
+                customer=request.user,
+                frequency=request.POST.get("frequency", "weekly"),
+                day_of_week="Monday",
+                delivery_day="Wednesday",
+                next_order_date=next_order_date
+            )
+
+            for item in cart_items:
+                RecurringOrderItem.objects.create(
+                    recurring_order=recurring,
+                    product=item.product,
+                    quantity=item.quantity
+                )
+
+            scheduled = ScheduledOrder.objects.create(
+                recurring_order=recurring,
+                scheduled_date=next_order_date
+            )
+
+            for item in cart_items:
+                ScheduledOrderItem.objects.create(
+                    scheduled_order=scheduled,
+                    product=item.product,
+                    quantity=item.quantity
+                )
+
+
+        # CLEAR CART
+
         cart.items.all().delete()
 
         messages.success(request, "Order placed successfully!")
@@ -315,6 +360,16 @@ def checkout(request):
 
     return render(request, "marketplace/checkout.html", {
         "cart": cart
+    })
+
+@login_required
+def recurring_orders(request):
+    scheduled_orders = ScheduledOrder.objects.filter(
+        recurring_order__customer=request.user
+    ).prefetch_related("items__product")
+
+    return render(request, "marketplace/recurring_orders.html", {
+        "scheduled_orders": scheduled_orders
     })
 
 from .models import SubOrder
@@ -537,3 +592,63 @@ def mark_delivered(request, suborder_id):
             suborder.save()
 
     return redirect('producer_orders')
+
+def edit_scheduled_order(request, order_id):
+    order = get_object_or_404(
+        ScheduledOrder,
+        id=order_id,
+        recurring_order__customer=request.user
+    )
+
+    if request.method == "POST":
+
+       
+        if request.POST.get("delete_item"):
+            item_id = request.POST.get("delete_item")
+            item = get_object_or_404(
+                ScheduledOrderItem,
+                id=item_id,
+                scheduled_order=order
+            )
+            item.delete()
+            return redirect("edit_scheduled_order", order_id=order.id)
+
+        
+        if request.POST.get("add_product"):
+            product_id = request.POST.get("new_product")
+            quantity = request.POST.get("new_quantity")
+
+            if product_id and quantity:
+                product = get_object_or_404(Product, id=product_id)
+
+                item, created = ScheduledOrderItem.objects.get_or_create(
+                    scheduled_order=order,
+                    product=product
+                )
+
+                if not created:
+                    # already exists → increase quantity
+                    item.quantity += int(quantity)
+                else:
+                    # new item
+                    item.quantity = int(quantity)
+
+                item.save()
+
+            return redirect("edit_scheduled_order", order_id=order.id)
+
+        
+        if request.POST.get("save_changes"):
+            for item in order.items.all():
+                new_qty = request.POST.get(f"quantity_{item.id}")
+                if new_qty:
+                    item.quantity = int(new_qty)
+                    item.save()
+
+            return redirect("recurring_orders")
+
+    # GET REQUEST
+    return render(request, "marketplace/edit_scheduled_order.html", {
+        "order": order,
+        "all_products": Product.objects.all()
+    })

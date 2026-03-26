@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recurring Orders</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            margin: 0;
+            text-align: center;
+        }
+
+        nav {
+            background: #1f2937;
+            padding: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .container {
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 500px;
+            margin: 20px auto;
+            text-align: left;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            font-size: 12px;
+        }
+
+        .empty {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            margin: 40px auto;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+        <a href="/marketplace/cart/">Cart</a>
+        <a href="/marketplace/recurring/">Recurring Orders</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Recurring Orders</h1>
+
+    <!-- DEBUG INFO (optional, remove later) -->
+    <p>Total recurring orders: {{ scheduled_orders|length }}</p>
+
+    {% if scheduled_orders %}
+
+        {% for order in scheduled_orders %}
+            <div class="card">
+
+                <h3>Next Order: {{ order.scheduled_date }}</h3>
+
+                <ul>
+                    {% for item in order.items.all %}
+                        <li>
+                            {{ item.product.name }} — {{ item.quantity }}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <!-- ✅ Edit button -->
+                <div style="margin-top:15px;">
+                    <a href="/marketplace/scheduled/{{ order.id }}/edit/">
+                        <button>Edit This Order</button>
+                    </a>
+                </div>
+
+            </div>
+        {% endfor %}
+
+    {% else %}
+
+        <!-- EMPTY STATE -->
+        <div class="empty">
+            <h3>No recurring orders yet</h3>
+            <p>
+                When you place an order and select
+                <strong>"Make this a recurring order"</strong>,
+                it will appear here.
+            </p>
+
+            <a href="/marketplace/">
+                <button style="margin-top:15px;">Browse Products</button>
+            </a>
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>

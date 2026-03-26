@@ -16,7 +16,10 @@ from .views import (create_product,
                     reorder,
                     update_suborder_status,
                     mark_ready,
-                    mark_delivered,)
+                    mark_delivered,
+                    recurring_orders,
+                    edit_scheduled_order
+                    )
 
 
 urlpatterns = [
@@ -44,4 +47,6 @@ urlpatterns = [
     path("producer/orders/<int:suborder_id>/status/", update_suborder_status, name="update_suborder_status"), 
     path("producer/orders/<int:suborder_id>/ready/",mark_ready,name="mark_ready"),
     path("producer/orders/<int:suborder_id>/delivered/", mark_delivered, name="mark_delivered"),
+    path("recurring/", recurring_orders, name="recurring_orders"),
+    path('scheduled/<int:order_id>/edit/', edit_scheduled_order, name='edit_scheduled_order'),
 ]

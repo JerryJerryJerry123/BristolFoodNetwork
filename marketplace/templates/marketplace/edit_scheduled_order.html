@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Order</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f7f7f7;
+            margin: 0;
+            text-align: center;
+        }
+
+        nav {
+            background: #1f2937;
+            padding: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        nav a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+        }
+
+        .container {
+            padding: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: auto;
+            text-align: left;
+        }
+
+        input {
+            width: 60px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div>Bristol Food Network</div>
+    <div>
+        <a href="/">Home</a>
+        <a href="/marketplace/">Marketplace</a>
+        <a href="/marketplace/recurring/">Recurring Orders</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <h1>Edit Order</h1>
+
+    <div class="card">
+
+        <p><strong>Date:</strong> {{ order.scheduled_date }}</p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            {% for item in order.items.all %}
+                <p>
+                    {{ item.product.name }}
+
+                    <input type="number"
+                        name="quantity_{{ item.id }}"
+                        value="{{ item.quantity }}"
+                        min="0">
+
+                    <button type="submit" name="delete_item" value="{{ item.id }}">
+                        Remove
+                    </button>
+                </p>
+            {% empty %}
+                <p>No items found</p>
+            {% endfor %}
+
+            <hr>
+
+            <h3>Add Product</h3>
+
+            <select name="new_product">
+                <option value="">Select product</option>
+                {% for product in all_products %}
+                    <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="number" name="new_quantity" placeholder="Qty" min="1">
+
+            <button type="submit" name="add_product" value="1">Add</button>
+            <br>
+            <button type="submit" name="save_changes" value="1">Save Changes</button>
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

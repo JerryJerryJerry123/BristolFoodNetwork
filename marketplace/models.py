@@ -155,3 +155,57 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.rating}"
+
+class RecurringOrder(models.Model):
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    frequency = models.CharField(max_length=20, default="weekly")  # NEW
+
+    day_of_week = models.CharField(max_length=10)  # Monday
+    delivery_day = models.CharField(max_length=10)  # Wednesday
+
+    next_order_date = models.DateField(null=True, blank=True)  # NEW
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.customer.username} - {self.day_of_week}"
+
+class RecurringOrderItem(models.Model):
+    recurring_order = models.ForeignKey(
+        RecurringOrder,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
+class ScheduledOrder(models.Model):
+    recurring_order = models.ForeignKey(
+        RecurringOrder,
+        on_delete=models.CASCADE,
+        related_name="scheduled_orders"
+    )
+
+    scheduled_date = models.DateField()
+    is_modified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.recurring_order.customer.username} - {self.scheduled_date}"
+
+
+class ScheduledOrderItem(models.Model):
+    scheduled_order = models.ForeignKey(
+        ScheduledOrder,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
