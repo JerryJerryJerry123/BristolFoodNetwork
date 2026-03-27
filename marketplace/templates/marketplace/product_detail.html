@@ -182,7 +182,7 @@
         
             {% if product.status == "seasonal" %}
                 <span class="badge">In Season</span><br>
-        
+
                 {% if product.season_start_month and product.season_end_month %}
                     <span class="pill">
                         Available: {{ product.season_start_month }} - {{ product.season_end_month }}
@@ -221,7 +221,7 @@
 
         <form method="post" action="{% url 'add_to_cart' product.id %}">
             {% csrf_token %}
-        
+                
             <label for="qty">Quantity ({{ product.unit }}):</label>
             <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
             <button type="submit">Add to Cart</button>
