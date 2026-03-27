@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Content</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f7f7f7;
+            color: #111;
+        }
+        .card {
+            background:white; padding:20px; margin:15px 0; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);
+        }
+        img {
+            max-width:100%; border-radius:8px; margin-bottom:10px;
+        }
+        h1 {
+            text-align:center;
+        }
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div>Bristol Food Network</div>
+
+        <div>
+            <a href="/">Home</a>
+            <a href="/marketplace/">Marketplace</a>
+            <a href="/marketplace/view-content">View Content</a>
+
+            {% if user.is_authenticated %}
+                {% if user.producerprofile %}
+                    <a href="/marketplace/product/new/">Add Product</a>
+                    <a href="/marketplace/producer/orders/">My Orders</a>
+                    <a href="/marketplace/producer/products/">My Products</a>
+                    <a href="/payments">Payments</a>
+                    <a href="/marketplace/content">Add Content</a>
+                    {% endif %}
+                    {% if user.customerprofile %}
+                    <a href="/marketplace/cart/">View Cart</a>
+                {% endif %}
+
+                <form method="post" action="/logout/" style="display:inline; border: none; color: white; background: none;">
+                    {% csrf_token %}
+                    <a href=""><button type="submit">Logout</button></a>
+                </form>
+            {% else %}
+                <a href="/login/">Login</a>
+                <a href="/register/">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <h1>Recipes & Farm Stories</h1>
+
+    <h2>Recipes</h2>
+    {% for recipe in recipes %}
+        <div class="card">
+            <h3>{{ recipe.title }} <small>by {{ recipe.producer.username }}</small></h3>
+            {% if recipe.image %}
+                <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+            {% endif %}
+            <p>{{ recipe.description }}</p>
+            <p><strong>Season:</strong> {{ recipe.season }}</p>
+            <p><strong>Ingredients:</strong></p>
+            <ul>
+                {% for ingredient in recipe.ingredients.all %}
+                    <li>{{ ingredient.name }}</li>
+                {% endfor %}
+            </ul>
+            <p><strong>Instructions:</strong> {{ recipe.cooking_instructions }}</p>
+        </div>
+    {% empty %}
+        <p>No recipes yet.</p>
+    {% endfor %}
+
+    <h2>Farm Stories</h2>
+    {% for story in stories %}
+        <div class="card">
+            <h3>{{ story.title }} <small>by {{ story.producer.username }}</small></h3>
+            <p>{{ story.content }}</p>
+            <p><strong>Harvest Season:</strong> {{ story.harvest_season }}</p>
+            <small>Posted on {{ story.created_at|date:"M d, Y" }}</small>
+        </div>
+    {% empty %}
+        <p>No farm stories yet.</p>
+    {% endfor %}
+</body>
+</html>

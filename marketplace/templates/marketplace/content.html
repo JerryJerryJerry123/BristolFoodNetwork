@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Content</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f7f7f7;
+            color: #111;
+        }
+
+        #new-recipe-btn, #new-story-btn {
+            margin: 60px auto;
+            display: block;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #new-recipe-btn:hover, #new-story-btn:hover {
+            background: #1e4fd6;
+        }
+
+        #recipe-form-container {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 100;
+        }
+
+        #recipe-form-container.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #recipe-form {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #2563eb;
+            outline: none;
+        }
+
+        .ingredients-box {
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .ingredients-box.show {
+            display: block;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            gap: 8px;
+            box-sizing: border-box;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .primary-btn:hover {
+            background: #2563eb;
+        }
+
+        .secondary-btn {
+            padding: 8px 12px;
+            background: #e5e7eb;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .secondary-btn:hover {
+            background: #d1d5db;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        nav{
+            background:#1f2937;
+            padding:15px;
+            color:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        nav a{
+            color:white;
+            text-decoration:none;
+            margin-left:20px;
+        }
+        
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <nav>
+        <div>Bristol Food Network</div>
+
+        <div>
+            <a href="/">Home</a>
+            <a href="/marketplace/">Marketplace</a>
+            <a href="/marketplace/view-content">View Content</a>
+
+            {% if user.is_authenticated %}
+                {% if user.producerprofile %}
+                    <a href="/marketplace/product/new/">Add Product</a>
+                    <a href="/marketplace/producer/orders/">My Orders</a>
+                    <a href="/marketplace/producer/products/">My Products</a>
+                    <a href="/payments">Payments</a>
+                    <a href="/marketplace/content">Add Content</a>
+                    {% endif %}
+                    {% if user.customerprofile %}
+                    <a href="/marketplace/cart/">View Cart</a>
+                {% endif %}
+
+                <form method="post" action="/logout/" style="display:inline; border: none; color: white; background: none;">
+                    {% csrf_token %}
+                    <a href=""><button type="submit">Logout</button></a>
+                </form>
+            {% else %}
+                <a href="/login/">Login</a>
+                <a href="/register/">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <h1>Recipes And Stories</h1>
+    
+    <button id="new-recipe-btn" onclick="">Add New Recipe</button>
+
+    <h2>Your Recipes</h2>
+
+    {% for recipe in recipes %}
+        <div style="background:white; padding:15px; margin:10px; border-radius:10px;">
+            <h3>{{ recipe.title }}</h3>
+            <p>{{ recipe.description }}</p>
+            <p><strong>Season:</strong> {{ recipe.season }}</p>
+
+            <p><strong>Ingredients:</strong></p>
+            <ul>
+                {% for ingredient in recipe.ingredients.all %}
+                    <li>{{ ingredient.name }}</li>
+                {% endfor %}
+            </ul>
+
+            <p><strong>Instructions:</strong></p>
+            <p>{{ recipe.cooking_instructions }}</p>
+
+            <!-- Delete Recipe -->
+            <form method="post" style="margin-top:10px;">
+                {% csrf_token %}
+                <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
+                <button type="submit" name="delete_recipe" style="background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">
+                    Delete Recipe
+                </button>
+            </form>
+        </div>
+        {% empty %}
+        <p>No recipes yet</p>
+    {% endfor %}
+
+    <h2>Your Farm Stories</h2>
+
+    {% for story in stories %}
+        <div class="card" style="background:white; padding:15px; margin:10px; border-radius:10px;">
+            <h3>{{ story.title }}</h3>
+
+            <p>{{ story.content }}</p>
+
+            <p><strong>Season:</strong> {{ story.harvest_season }}</p>
+            <small>{{ story.created_at }}</small>
+
+            <!-- Delete -->
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="story_id" value="{{ story.id }}">
+                <button type="submit" name="delete_story" style="background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">Delete</button>
+            </form>
+        </div>
+    {% empty %}
+        <p>No farm stories yet.</p>
+    {% endfor %}
+
+    <div id="recipe-form-container">
+    <form method="post" id="recipe-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="recipe-title">Recipe Title</label>
+            <input type="text" name="recipe_title" id="recipe-title">
+        </div>
+
+        <div class="form-group">
+            <label for="recipe-description">Recipe Description</label>
+            <input type="text" name="recipe_description" id="recipe-description">
+        </div>
+
+        <div class="form-group">
+            <button id="toggle-ingredients-btn" type="button" class="secondary-btn">
+                Select Ingredients
+            </button>
+        </div>
+
+        <div id="ingredients-container" class="ingredients-box">
+            {% for product in products %}
+            <label class="checkbox-item">
+                {{ product.name }}
+                <input type="checkbox" name="ingredients" value="{{ product.id }}">
+            </label>
+            {% empty %}
+            <p>No products yet</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label for="cooking-instructions">Cooking Instructions</label>
+            <textarea id="cooking-instructions" name="cooking_instructions"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="season">Season</label>
+            <select id="season" name="season">
+                <option value="">Select a season</option>
+                <option value="autumn">Autumn</option>
+                <option value="winter">Winter</option>
+            </select>
+        </div>
+
+        <button type="submit" name="add_recipe" class="primary-btn">Add Recipe</button>
+        <button type="button" id="close-form-btn" class="close-btn">✕</button>
+
+    </form>
+    </div>
+
+
+    <!-- Button to open Farm Story modal -->
+    <button id="new-story-btn">
+        Add Farm Story
+    </button>
+
+    <!-- Farm Story Modal -->
+    <div id="story-form-container" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.4); z-index:100; justify-content:center; align-items:center;">
+    
+    <form method="post" id="story-form" style="background:white; padding:30px; border-radius:12px; width:350px; display:flex; flex-direction:column; gap:15px; box-shadow:0 15px 40px rgba(0,0,0,0.2); position:relative;">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" name="story_title" required>
+        </div>
+
+        <div class="form-group">
+            <label>Story</label>
+            <textarea name="story_content" rows="4" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Harvest Season</label>
+            <select name="harvest_season" required>
+                <option value="">Select season</option>
+                <option value="spring">Spring</option>
+                <option value="summer">Summer</option>
+                <option value="autumn">Autumn</option>
+                <option value="winter">Winter</option>
+            </select>
+        </div>
+
+        <button type="submit" name="create_story" class="primary-btn">Post Story</button>
+        <button type="button" id="close-story-btn" class="close-btn">✕</button>
+    </form>
+
+    <script>
+        const openBtn = document.getElementById("new-recipe-btn");
+        const modal = document.getElementById("recipe-form-container");
+        const closeBtn = document.getElementById("close-form-btn");
+
+        openBtn.addEventListener("click", () => {
+            modal.classList.add("show");
+        });
+
+        closeBtn.addEventListener("click", () => {
+            modal.classList.remove("show");
+        });
+
+        // Close on outside click
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                modal.classList.remove("show");
+            }
+        });
+
+        // Ingredients toggle
+        const ingredientsBtn = document.getElementById("toggle-ingredients-btn");
+        const ingredientsBox = document.getElementById("ingredients-container");
+
+        ingredientsBtn.addEventListener("click", () => {
+            ingredientsBox.classList.toggle("show");
+        });
+
+        const openStoryBtn = document.getElementById("new-story-btn");
+        const storyModal = document.getElementById("story-form-container");
+        const closeStoryBtn = document.getElementById("close-story-btn");
+
+        openStoryBtn.addEventListener("click", () => {
+            storyModal.style.display = "flex";
+        });
+
+        closeStoryBtn.addEventListener("click", () => {
+            storyModal.style.display = "none";
+        });
+
+        // Close on outside click
+        storyModal.addEventListener("click", (e) => {
+            if (e.target === storyModal) {
+                storyModal.style.display = "none";
+            }
+        });
+    </script>
+</body>
+
+</html>

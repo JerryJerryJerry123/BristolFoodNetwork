@@ -4,6 +4,47 @@ from accounts.models import CustomerProfile
 from django.utils import timezone
 from datetime import timedelta
 
+class Recipe(models.Model):
+    producer = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    cooking_instructions = models.TextField()
+
+    ingredients = models.ManyToManyField('Product')
+
+    SEASON_CHOICES = [
+        ('autumn', 'Autumn'),
+        ('winter', 'Winter'),
+    ]
+
+    season = models.CharField(max_length=20, choices=SEASON_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class FarmStory(models.Model):
+    producer = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+
+    HARVEST_CHOICES = [
+        ('spring', 'Spring'),
+        ('summer', 'Summer'),
+        ('autumn', 'Autumn'),
+        ('winter', 'Winter'),
+    ]
+
+    harvest_season = models.CharField(max_length=20, choices=HARVEST_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
 class Product(models.Model):
 
     STATUS_CHOICES = [
