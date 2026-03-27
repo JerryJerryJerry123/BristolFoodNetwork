@@ -18,11 +18,16 @@ from .views import (create_product,
                     mark_ready,
                     mark_delivered,
                     recurring_orders,
-                    edit_scheduled_order
+                    edit_scheduled_order,
+                    content,
+                    view_content
                     )
 
 
 urlpatterns = [
+    path('content/', content, name='content'),
+    path('view-content/', view_content, name='view_content'),
+
     path('product/new/', create_product, name='create_product'),
 
     path('', marketplace_home, name='marketplace_home'),

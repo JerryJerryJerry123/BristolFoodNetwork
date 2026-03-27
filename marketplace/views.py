@@ -26,8 +26,80 @@ from .models import (
     RecurringOrderItem,
     ScheduledOrder,
     ScheduledOrderItem,
+    Recipe,
+    FarmStory
 )
 
+def view_content(request):
+    recipes = Recipe.objects.all().order_by("-created_at")
+    stories = FarmStory.objects.all().order_by("-created_at")
+
+    return render(request, "marketplace/view_content.html", {
+        "recipes": recipes,
+        "stories": stories,
+    })
+
+@login_required
+def content(request):
+    producer = request.user
+
+    if request.method == "POST":
+        # Add recipe
+        if "add_recipe" in request.POST:
+            title = request.POST.get("recipe_title")
+            description = request.POST.get("recipe_description")
+            cooking_instructions = request.POST.get("cooking_instructions")
+            season = request.POST.get("season")
+            ingredients_ids = request.POST.getlist("ingredients")
+
+            recipe = Recipe.objects.create(
+                producer=producer,
+                title=title,
+                description=description,
+                cooking_instructions=cooking_instructions,
+                season=season,
+            )
+            if ingredients_ids:
+                recipe.ingredients.set(Product.objects.filter(id__in=ingredients_ids))
+            return redirect("content")
+
+        # Delete recipe
+        if "delete_recipe" in request.POST:
+            recipe_id = request.POST.get("recipe_id")
+            recipe = get_object_or_404(Recipe, id=recipe_id, producer=producer)
+            recipe.delete()
+            return redirect("content")
+
+        # Add farm story
+        if "create_story" in request.POST:
+            title = request.POST.get("story_title")
+            content_text = request.POST.get("story_content")
+            harvest_season = request.POST.get("harvest_season")
+            FarmStory.objects.create(
+                producer=producer,
+                title=title,
+                content=content_text,
+                harvest_season=harvest_season
+            )
+            return redirect("content")
+
+        # Delete farm story
+        if "delete_story" in request.POST:
+            story_id = request.POST.get("story_id")
+            story = get_object_or_404(FarmStory, id=story_id, producer=producer)
+            story.delete()
+            return redirect("content")
+
+    # Get data for this producer
+    recipes = Recipe.objects.filter(producer=producer).order_by("-created_at")
+    stories = FarmStory.objects.filter(producer=producer).order_by("-created_at")
+    products = Product.objects.filter(producer=producer)
+
+    return render(request, "marketplace/content.html", {
+        "recipes": recipes,
+        "stories": stories,
+        "products": products,
+    })
 
 #login requirements
 @login_required

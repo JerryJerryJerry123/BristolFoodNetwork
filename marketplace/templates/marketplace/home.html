@@ -66,7 +66,7 @@
             color:#111827;
             box-shadow:0 1px 4px rgba(0,0,0,0.08);
         }
-                .search-bar{
+        .search-bar{
             display:flex;
             gap:10px;
             justify-content:center;
@@ -119,6 +119,7 @@
     <div>
         <a href="/">Home</a>
         <a href="/marketplace/">Marketplace</a>
+        <a href="/marketplace/view-content">View Content</a>
 
         {% if user.is_authenticated %}
             {% if user.producerprofile %}
@@ -126,12 +127,13 @@
                 <a href="/marketplace/producer/orders/">My Orders</a>
                 <a href="/marketplace/producer/products/">My Products</a>
                 <a href="/payments">Payments</a>
-            {% endif %}
-            {% if user.customerprofile %}
+                <a href="/marketplace/content">Add Content</a>
+                {% endif %}
+                {% if user.customerprofile %}
                 <a href="/marketplace/cart/">View Cart</a>
             {% endif %}
 
-            <form method="post" action="/logout/" style="display:inline;">
+            <form method="post" action="/logout/" style="display:inline; border: none; color: white; background: none;">
                 {% csrf_token %}
                 <a href=""><button type="submit">Logout</button></a>
             </form>
