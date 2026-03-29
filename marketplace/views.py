@@ -724,3 +724,25 @@ def edit_scheduled_order(request, order_id):
         "order": order,
         "all_products": Product.objects.all()
     })
+
+
+@login_required
+def cancel_suborder(request, suborder_id):
+    suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+    # Ensure the current user owns the order
+    if suborder.order.customer.user != request.user:
+        return redirect('order_history')  # or your customer orders page
+
+    if request.method == "POST":
+        if suborder.status == "pending":
+            suborder.status = "cancelled"
+            suborder.save()
+
+            # optional: notify producer
+            Notification.objects.create(
+                customer=suborder.order.customer,
+                message=f"You cancelled Order #{suborder.order.id}."
+            )
+
+    return redirect('order_history')

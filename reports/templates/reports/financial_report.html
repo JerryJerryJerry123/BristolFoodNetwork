@@ -88,6 +88,18 @@
             border-radius:6px;
             cursor:pointer;
         }
+
+        .badge{
+            padding:5px 10px;
+            border-radius:999px;
+            font-size:12px;
+            color:white;
+        }
+
+        .badge.pending{ background:#f59e0b; }
+        .badge.ready{ background:#fb923c; }
+        .badge.delivered{ background:#22c55e; }
+        .badge.cancelled{ background:#ef4444; }
     </style>
 </head>
 <body>
@@ -112,11 +124,27 @@
 
     <p class="total">Period: {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}</p>
     <p class="total">Total Orders: {{ num_orders }}</p>
-    <p class="total">Total Order Value: £{{ total_value }}</p>
-    <p class="total">Total Commission (5%): £{{ total_commission }}</p>
-    <p class="total">Year-to-Date Commission: £{{ ytd_commission }}</p>
+
 
     <hr>
+
+<h3>Revenue Overview</h3>
+
+<div style="display:flex; gap:40px; margin:20px 0;">
+    <div style="background:#ecfdf5; padding:15px; border-radius:8px;">
+        <strong>✅ Confirmed (Delivered Only)</strong>
+        <p>Revenue: £{{ confirmed_revenue|floatformat:2 }}</p>
+        <p>Commission: £{{ confirmed_commission|floatformat:2 }}</p>
+    </div>
+
+    <div style="background:#eff6ff; padding:15px; border-radius:8px;">
+        <strong>📊 Estimated (All Active Orders)</strong>
+        <p>Revenue: £{{ estimated_revenue|floatformat:2 }}</p>
+        <p>Commission: £{{ estimated_commission|floatformat:2 }}</p>
+    </div>
+</div>
+
+<hr>
 
     {% for o in orders %}
     <div class="order">
@@ -127,7 +155,21 @@
             <ul>
                 <li>SubOrder Total: £{{ s.subtotal }}</li>
                 <li>Producer Payment: £{{ s.producer_payment }}</li>
-                <li>Delivery Date: {{ s.delivery_date }}</li>
+                <li>
+                    Delivery Date: {{ s.delivery_date }} <br>
+                    Status:
+                    {% if s.status == "cancelled" %}
+                    <span class="badge cancelled">Cancelled</span>
+                    {% elif s.status == "pending" %}
+                        <span class="badge pending">Pending</span>
+                    {% elif s.status == "ready" %}
+                        <span class="badge ready">Ready for Delivery</span>
+                    {% elif s.status == "delivered" %}
+                        <span class="badge delivered">Delivered</span>
+                    {% else %}
+                        <span class="badge">{{ s.status }}</span>
+                    {% endif %}
+                </li>
             </ul>
         </div>
         {% endfor %}

@@ -51,6 +51,10 @@
             margin-top:0;
         }
 
+        .card.cancelled{
+                opacity:0.6;
+            }
+
         .section{
             margin-top:10px;
             font-size:14px;
@@ -58,13 +62,26 @@
 
         .badge{
             display:inline-block;
-            padding:4px 8px;
+            padding:6px 10px;
             border-radius:999px;
-            background:#e5e7eb;
             font-size:12px;
             margin-top:6px;
+            color:white;
         }
+        .badge.pending{ background:#f59e0b; }
+        .badge.ready{ background:#fb923c; }
+        .badge.delivered{ background:#22c55e; }
+        .badge.cancelled{ background:#ef4444; }
 
+        .date-badge{
+            display:inline-block;
+            padding:6px 10px;
+            border-radius:999px;
+            font-size:12px;
+            margin-top:6px;
+            background:#e5e7eb;
+            color:#111827;
+        }
         ul{
             padding-left:18px;
             margin-top:6px;
@@ -107,7 +124,7 @@
     {% if suborders %}
         <div class="cards">
             {% for suborder in suborders %}
-                <div class="card">
+                <div class="card {{ suborder.status }}">
 
                     <h3>
                         <a href="{% url 'producer_order_detail' suborder.id %}">
@@ -127,8 +144,15 @@
 
                     <div class="section">
                         <strong>Delivery Date:</strong>
-                        <span class="badge">
+                        <span class="date-badge">
                             {{ suborder.delivery_date }}
+                        </span>
+                    </div>
+                    
+                    <div class="section">
+                        <strong>Status:</strong>
+                        <span class="badge {{ suborder.status }}">
+                            {{ suborder.get_status_display }}
                         </span>
                     </div>
 
