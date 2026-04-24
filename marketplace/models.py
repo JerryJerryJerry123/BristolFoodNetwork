@@ -142,6 +142,7 @@ class SubOrder(models.Model):
         ('pending', 'Pending'),
         ('ready', 'Ready for Delivery'),
         ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled')
     ]
     
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="suborders")
