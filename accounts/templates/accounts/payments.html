@@ -10,20 +10,6 @@
             margin: 0;
             background: #f7f7f7;
         }
-        nav {
-            background: #1f2937;
-            padding: 15px 30px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            font-weight: bold;
-        }
         #weekly_settlement_payments_btn {
             width: 100%;
             display: flex;
@@ -41,14 +27,7 @@
 </head>
 <body>
 
-<nav>
-    <div>Bristol Food Network</div>
-    <div>
-        <a href="/">Home</a>
-        <a href="/marketplace/">Marketplace</a>
-        <a href="/register/">Register</a>
-    </div>
-</nav>
+{% include "navbar.html" %}
 
     <a href="/payments/weekly_settlement_payments" id="weekly_settlement_payments_btn"><button>Weekly Settlement Payment</button></a>
 

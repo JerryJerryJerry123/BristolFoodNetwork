@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        nav {
+            background: #1f2937;
+            padding: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        nav form button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: inherit;
+            padding: 0;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div>Bristol Food Network</div>
+
+        <div>
+            <a href="/">Home</a>
+            <a href="/marketplace/">Marketplace</a>
+            <a href="/marketplace/view-content">View Content</a>
+
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a href="{% url 'financial_report' %}">Financial Reports</a>
+                {% endif %}
+                {% if user.producerprofile %}
+                    <a href="/marketplace/product/new/">Add Product</a>
+                    <a href="/marketplace/producer/orders/">My Orders</a>
+                    <a href="/marketplace/producer/products/">My Products</a>
+                    <a href="/payments">Payments</a>
+                    <a href="/marketplace/content">Add Content</a>
+                    {% endif %}
+                    {% if user.customerprofile %}
+                    <a href="/marketplace/cart/">View Cart</a>
+                {% endif %}
+
+                <form method="post" action="/logout/" style="display:inline; border: none; color: white; background: none;">
+                    {% csrf_token %}
+                    <a href=""><button type="submit">Logout</button></a>
+                </form>
+            {% else %}
+                <a href="/login/">Login</a>
+                <a href="/register/">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+</body>
+</html>
