@@ -108,6 +108,9 @@
         .card a:hover{
             text-decoration: underline;
         }
+        .dimmed {
+            opacity: 0.6;
+        }
     </style>
 </head>
 
@@ -164,9 +167,15 @@
     <h2>All Products</h2>
     <div class="cards">
         {% for p in products %}
-            <div class="card">
+            <div class="card {% if p.status == 'non_seasonal' %}dimmed{% endif %}">
                 <a href="{% url 'product_detail' p.id %}"><strong>{{ p.name }}</strong></a>
-                £{{ p.price }} / {{ p.unit }}<br>
+                {% if p.is_surplus and p.has_discount %}
+                    <span style="text-decoration:line-through;">£{{ p.price }}</span>
+                    <strong>£{{ p.discounted_price|floatformat:2 }}</strong> / {{ p.unit }}
+                    <span class="badge">{{ p.discount_percentage }}% off</span><br>
+                {% else %}
+                    £{{ p.price }} / {{ p.unit }}<br>
+                {% endif %}
 
                 Farm:
                 {% if p.producer.producerprofile %}
@@ -184,7 +193,8 @@
                 {% elif p.status == "all_year" %}
                     <span class="badge">Available Year-Round</span>
                 {% else %}
-                    <span class="badge">Out of Season</span>
+                    <span class="badge" style="background:#ef4444;">Out of Season</span><br>
+                    <small style="color:#ef4444;">Currently unavailable</small>
                 {% endif %}
             </div>
         {% empty %}

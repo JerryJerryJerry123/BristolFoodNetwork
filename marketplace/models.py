@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from accounts.models import CustomerProfile
 from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
 
 class Recipe(models.Model):
     producer = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -48,7 +49,7 @@ class FarmStory(models.Model):
 class Product(models.Model):
 
     STATUS_CHOICES = [
-        ('in_season', 'In Season'),
+        ('seasonal', 'Seasonal'),
         ('out_of_season', 'Out of Season'),
         ('unavailable', 'Unavailable'),
     ]
@@ -93,6 +94,17 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def discounted_price(self):
+        if self.is_surplus and self.discount_percentage and self.discount_percentage > 0:
+            discount = self.price * Decimal(self.discount_percentage) / Decimal("100")
+            return self.price - discount
+        return self.price
+
+    @property
+    def has_discount(self):
+        return self.is_surplus and self.discount_percentage and self.discount_percentage > 0
 
 class Category(models.Model):
     name = models.CharField(max_length=255,unique=True)
@@ -123,7 +135,7 @@ class CartItem(models.Model):
 
     @property
     def line_total(self):
-        return self.product.price * self.quantity
+        return self.product.discounted_price * self.quantity
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
@@ -176,7 +188,7 @@ class OrderItem(models.Model):
 
     @property
     def line_total(self):
-        return self.product.price * self.quantity
+        return self.product.discounted_price * self.quantity
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"

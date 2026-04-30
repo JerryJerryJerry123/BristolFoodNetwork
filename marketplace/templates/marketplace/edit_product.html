@@ -97,6 +97,30 @@
     <option value="August" {% if product.season_end_month == "August" %}selected{% endif %}>August</option>
 </select>
 
+<br><br>
+
+<label>
+    Mark as Surplus / Discounted Product
+</label><br>
+<input 
+    type="checkbox" 
+    name="is_surplus" 
+    {% if product.is_surplus %}checked{% endif %}
+>
+
+<br><br>
+
+<label>
+    Discount Percentage
+</label><br>
+<input 
+    type="number" 
+    name="discount_percentage" 
+    min="0" 
+    max="100" 
+    value="{{ product.discount_percentage }}"
+>
+
 <button type="submit">Save Changes</button>
 
 </form>
