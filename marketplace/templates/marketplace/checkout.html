@@ -159,11 +159,24 @@
 
                     <ul>
                         {% for item in producer.list %}
-                            <li>
-                                {{ item.product.name }} —
-                                {{ item.quantity|floatformat:2 }} —
-                                £{{ item.line_total|floatformat:2 }}
-                            </li>
+                    <li>
+                        <strong>{{ item.product.name }}</strong><br>
+                    
+                        {% if item.product.is_surplus and item.product.has_discount %}
+                            <span style="text-decoration:line-through;">
+                                £{{ item.product.price|floatformat:2 }}
+                            </span>
+                            <strong>
+                                £{{ item.product.discounted_price|floatformat:2 }}
+                            </strong>
+                            <span class="badge">{{ item.product.discount_percentage }}% off</span>
+                        {% else %}
+                            £{{ item.product.price|floatformat:2 }}
+                        {% endif %}
+                        
+                        x {{ item.quantity|floatformat:2 }}
+                        = £{{ item.line_total|floatformat:2 }}
+                    </li>
                         {% endfor %}
                     </ul>
 

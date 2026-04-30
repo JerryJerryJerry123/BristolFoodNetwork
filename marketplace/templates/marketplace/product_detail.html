@@ -160,7 +160,15 @@
         
 
         <div class="row">
-            <strong>Price:</strong> £{{ product.price }} / {{ product.unit }}
+            <strong>Price:</strong>
+
+            {% if product.is_surplus and product.has_discount %}
+                <span style="text-decoration:line-through;">£{{ product.price }}</span>
+                <strong>£{{ product.discounted_price|floatformat:2 }}</strong> / {{ product.unit }}
+                <span class="badge">{{ product.discount_percentage }}% off</span>
+            {% else %}
+                £{{ product.price }} / {{ product.unit }}
+            {% endif %}
         </div>
 
         <div class="row">
@@ -219,13 +227,19 @@
 
         <h2>Add to Cart</h2>
 
-        <form method="post" action="{% url 'add_to_cart' product.id %}">
-            {% csrf_token %}
-        
-            <label for="qty">Quantity ({{ product.unit }}):</label>
-            <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
-            <button type="submit">Add to Cart</button>
-        </form>
+        {% if product.status == "non_seasonal" %}
+            <p style="color:red;">
+                <strong>This product is currently out of season and cannot be ordered.</strong>
+            </p>
+        {% else %}
+            <form method="post" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+            
+                <label for="qty">Quantity ({{ product.unit }}):</label>
+                <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
+                <button type="submit">Add to Cart</button>
+            </form>
+        {% endif %}
 
         <hr>
 
