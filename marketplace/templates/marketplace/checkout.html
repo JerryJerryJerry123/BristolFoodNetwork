@@ -212,6 +212,11 @@
         <label>CVV</label><br>
         <input type="text" name="cvv" placeholder="123"><br><br>
 
+        {% if user.customerprofile.account_type == 'organisation' %}
+            <h3>Special Delivery Instructions</h3>
+            <textarea name="special_instructions"></textarea>
+        {% endif %}
+
         <div class="total-box">
             <button type="submit">Confirm Order</button>
         </div>

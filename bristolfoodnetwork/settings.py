@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
-    'marketplace',
+    'marketplace.apps.MarketplaceConfig',
     'reports'
 ]
 

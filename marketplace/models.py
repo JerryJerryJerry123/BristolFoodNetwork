@@ -132,7 +132,8 @@ class Order(models.Model):
     customer = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    special_instructions = models.TextField(blank=True, null=True)
+    
     def __str__(self):
         return f"Order #{self.id} by {self.customer.user.username}"
 
@@ -142,6 +143,7 @@ class SubOrder(models.Model):
         ('pending', 'Pending'),
         ('ready', 'Ready for Delivery'),
         ('delivered', 'Delivered'),
+        ('failed', 'Failed delivery'),
         ('cancelled', 'Cancelled')
     ]
     

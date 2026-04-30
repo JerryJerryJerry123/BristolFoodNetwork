@@ -35,5 +35,6 @@ class CustomerRegistrationForm(forms.ModelForm):
             'phone',
             'delivery_address',
             'postcode',
+            'account_type'
         ]
         

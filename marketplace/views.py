@@ -330,10 +330,18 @@ def checkout(request):
   
         # CREATE ORDER
  
-        order = Order.objects.create(
-            customer=request.user.customerprofile
-        )
+        # CREATE ORDER
 
+        special_instructions = ""
+
+        if request.user.customerprofile.account_type == "organisation":
+            special_instructions = request.POST.get("special_instructions", "")
+
+        order = Order.objects.create(
+            customer=request.user.customerprofile,
+            special_instructions=special_instructions
+        )
+        
         grouped_items = defaultdict(list)
 
         for item in cart_items:
