@@ -11,21 +11,6 @@
             text-align:center;
         }
 
-        nav{
-            background:#1f2937;
-            padding:15px;
-            color:white;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        nav a{
-            color:white;
-            text-decoration:none;
-            margin-left:20px;
-        }
-
         .container{
             padding:40px 20px;
         }
@@ -83,28 +68,7 @@
 
 <body>
 
-<nav>
-    <div>Bristol Food Network</div>
-
-    <div>
-        <a href="/">Home</a>
-        <a href="/marketplace/">Marketplace</a>
-
-        {% if user.is_authenticated %}
-            {% if user.producerprofile %}
-                <a href="/marketplace/product/new/">Add Product</a>
-            {% endif %}
-
-            <form method="post" action="/logout/" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Logout</button>
-            </form>
-        {% else %}
-            <a href="/login/">Login</a>
-            <a href="/register/">Register</a>
-        {% endif %}
-    </div>
-</nav>
+{% include "navbar.html" %}
 
 <div class="container">
     <h1>{{ category.name }}</h1>
