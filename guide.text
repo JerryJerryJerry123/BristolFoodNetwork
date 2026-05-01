@@ -2,6 +2,7 @@ Change Line 6 of docker-compose.yml
 Change Line 86 of settings.py
 
 docker compose up -d
+docker compose exec bfn_django python manage.py makemigrations
 docker compose exec bfn_django python manage.py migrate
 
 http://localhost:8000/ to run

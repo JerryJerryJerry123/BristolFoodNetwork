@@ -11,21 +11,6 @@
             text-align:center;
         }
 
-        nav{
-            background:#1f2937;
-            padding:15px;
-            color:white;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        nav a{
-            color:white;
-            text-decoration:none;
-            margin-left:20px;
-        }
-
         .container{
             padding:40px 20px;
         }
@@ -108,31 +93,7 @@
 
 <body>
 
-<nav>
-    <div>Bristol Food Network</div>
-
-    <div>
-        <a href="/">Home</a>
-        <a href="/marketplace/">Marketplace</a>
-
-        {% if user.is_authenticated %}
-            {% if user.producerprofile %}
-                <a href="/marketplace/product/new/">Add Product</a>
-            {% endif %}
-            {% if user.customerprofile %}
-                <a href="/marketplace/cart/">View Cart</a>
-            {% endif %}
-
-            <form method="post" action="/logout/" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Logout</button>
-            </form>
-        {% else %}
-            <a href="/login/">Login</a>
-            <a href="/register/">Register</a>
-        {% endif %}
-    </div>
-</nav>
+{% include "navbar.html" %}
 
 <div class="container">
 
@@ -160,7 +121,15 @@
         
 
         <div class="row">
-            <strong>Price:</strong> £{{ product.price }} / {{ product.unit }}
+            <strong>Price:</strong>
+
+            {% if product.is_surplus and product.has_discount %}
+                <span style="text-decoration:line-through;">£{{ product.price }}</span>
+                <strong>£{{ product.discounted_price|floatformat:2 }}</strong> / {{ product.unit }}
+                <span class="badge">{{ product.discount_percentage }}% off</span>
+            {% else %}
+                £{{ product.price }} / {{ product.unit }}
+            {% endif %}
         </div>
 
         <div class="row">
@@ -219,13 +188,19 @@
 
         <h2>Add to Cart</h2>
 
-        <form method="post" action="{% url 'add_to_cart' product.id %}">
-            {% csrf_token %}
-                
-            <label for="qty">Quantity ({{ product.unit }}):</label>
-            <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
-            <button type="submit">Add to Cart</button>
-        </form>
+        {% if product.status == "non_seasonal" %}
+            <p style="color:red;">
+                <strong>This product is currently out of season and cannot be ordered.</strong>
+            </p>
+        {% else %}
+            <form method="post" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+            
+                <label for="qty">Quantity ({{ product.unit }}):</label>
+                <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
+                <button type="submit">Add to Cart</button>
+            </form>
+        {% endif %}
 
         <hr>
 

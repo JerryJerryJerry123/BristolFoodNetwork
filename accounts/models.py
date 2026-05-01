@@ -16,13 +16,21 @@ class ProducerProfile(models.Model):
 
 
 class CustomerProfile(models.Model):
+    ACCOUNT_TYPES = [
+        ('restaurant', 'Restaurant'),
+        ('organisation', 'Organisation'),
+    ]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=50)
     delivery_address = models.TextField()
     postcode = models.CharField(max_length=20)
-
+    account_type = models.CharField(
+            max_length=20,
+            choices=ACCOUNT_TYPES,
+            default='organisation'
+        )
     def __str__(self):
         return f"Customer: {self.user.username}"
     

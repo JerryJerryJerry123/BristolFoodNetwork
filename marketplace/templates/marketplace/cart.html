@@ -11,21 +11,6 @@
             text-align:center;
         }
 
-        nav{
-            background:#1f2937;
-            padding:15px;
-            color:white;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        nav a{
-            color:white;
-            text-decoration:none;
-            margin-left:20px;
-        }
-
         .container{
             padding:40px 20px;
         }
@@ -125,31 +110,7 @@
 
 <body>
 
-<nav>
-    <div>Bristol Food Network</div>
-
-    <div>
-        <a href="/">Home</a>
-        <a href="/marketplace/">Marketplace</a>
-
-        {% if user.is_authenticated %}
-            {% if user.producerprofile %}
-                <a href="/marketplace/product/new/">Add Product</a>
-            {% endif %}
-            {% if user.customerprofile %}
-                <a href="/marketplace/cart/">View Cart</a>
-            {% endif %}
-
-            <form method="post" action="/logout/" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Logout</button>
-            </form>
-        {% else %}
-            <a href="/login/">Login</a>
-            <a href="/register/">Register</a>
-        {% endif %}
-    </div>
-</nav>
+{% include "navbar.html" %}
 
 <div class="container">
     <h1>Your Cart</h1>
@@ -179,20 +140,33 @@
                 {% for item in cart.items.all %}
                 <tr>
                     <td>{{ item.product.name }}</td>
-                    <td>£{{ item.product.price }}</td>
+                    <td>
+                        {% if item.product.is_surplus and item.product.has_discount %}
+                            <span style="text-decoration:line-through;">£{{ item.product.price }}</span><br>
+                            <strong>£{{ item.product.discounted_price|floatformat:2 }}</strong>
+                        {% else %}
+                            £{{ item.product.price }}
+                        {% endif %}
+                    </td>
                     <td>
                         <form class="qty-form" method="post" action="{% url 'update_cart_item' item.id %}">
                             {% csrf_token %}
                             <input type="number" name="quantity" step="0.01" min="0" value="{{ item.quantity }}">
                             <button type="submit">Update</button>
                         </form>
+                    
+                        <form method="post" action="{% url 'update_cart_item' item.id %}" style="margin-top:5px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="0">
+                            <button type="submit" style="background:#dc2626;">Remove</button>
+                        </form>
                     </td>
-                    <td>£{{ item.line_total }}</td>
+                    <td>£{{ item.line_total|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
             </table>
 
-            <div class="total"><strong>Total:</strong> £{{ cart.total }}</div>
+            <div class="total"><strong>Total:</strong> £{{ cart.total|floatformat:2 }}</div>
             
             <div style="margin-top:20px; text-align:right;">
                 <a href="{% url 'checkout' %}">

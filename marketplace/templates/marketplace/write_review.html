@@ -11,20 +11,6 @@
             text-align: center;
         }
 
-        nav {
-            background: #1f2937;
-            padding: 15px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-        }
-
         .container {
             padding: 40px 20px;
         }
@@ -93,13 +79,8 @@
 
 <body>
 
-<nav>
-    <div>Bristol Food Network</div>
-    <div>
-        <a href="/">Home</a>
-        <a href="/marketplace/">Marketplace</a>
-    </div>
-</nav>
+{% include "navbar.html" %}
+
 
 <div class="container">
 

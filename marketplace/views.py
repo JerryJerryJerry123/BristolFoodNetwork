@@ -212,6 +212,10 @@ def add_to_cart(request, product_id):
 
     product = get_object_or_404(Product, id=product_id)
 
+    if product.status == "non_seasonal":
+        messages.error(request, "This product is currently out of season.")
+        return redirect("product_detail", product_id=product.id)
+
     if request.method == "POST":
         qty_str = request.POST.get("quantity", "1").strip()
 
@@ -330,10 +334,18 @@ def checkout(request):
   
         # CREATE ORDER
  
-        order = Order.objects.create(
-            customer=request.user.customerprofile
-        )
+        # CREATE ORDER
 
+        special_instructions = ""
+
+        if request.user.customerprofile.account_type == "organisation":
+            special_instructions = request.POST.get("special_instructions", "")
+
+        order = Order.objects.create(
+            customer=request.user.customerprofile,
+            special_instructions=special_instructions
+        )
+        
         grouped_items = defaultdict(list)
 
         for item in cart_items:
@@ -521,6 +533,21 @@ def edit_product(request, product_id):
         product.status = request.POST.get("status")
         product.season_start_month = request.POST.get("season_start_month", "").strip()
         product.season_end_month = request.POST.get("season_end_month", "").strip()
+
+        product.is_surplus = request.POST.get("is_surplus") == "on"
+
+        try:
+            discount = int(request.POST.get("discount_percentage", 0))
+        except ValueError:
+            discount = 0
+
+        if discount < 0:
+            discount = 0
+
+        if discount > 100:
+            discount = 100
+
+        product.discount_percentage = discount
 
         if product.status == "all_year":
             product.season_start_month = ""
