@@ -540,33 +540,48 @@ def edit_product(request, product_id):
 def write_review(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
-    # Must be a customer
     if not hasattr(request.user, "customerprofile"):
         return redirect("/")
 
     customer = request.user.customerprofile
 
-    # ❌ Prevent duplicate reviews
-    if Review.objects.filter(product=product, customer=customer).exists():
-        messages.error(request, "You have already reviewed this product.")
-        return redirect("product_detail", product_id=product.id)
-
-    # ❌ Only allow if purchased (basic check)
-    if not OrderItem.objects.filter(
+    # All purchases of this product
+    purchased_items = OrderItem.objects.filter(
         product=product,
         suborder__order__customer=customer
-    ).exists():
-        messages.error(request, "You can only review products you have purchased.")
+    )
+
+
+    if not purchased_items.exists():
+        messages.error(request, "You must purchase this item first.")
+        return redirect("product_detail", product_id=product.id)
+
+    # Purchases that haven't been reviewed yet
+    available_items = purchased_items.exclude(
+        id__in=Review.objects.filter(customer=customer)
+                             .values_list("order_item_id", flat=True)
+    )
+
+    if not available_items.exists():
+        messages.error(request, "You have already reviewed all your purchases of this product.")
         return redirect("product_detail", product_id=product.id)
 
     if request.method == "POST":
         rating = request.POST.get("rating")
         title = request.POST.get("title")
         text = request.POST.get("text")
+        order_item_id = request.POST.get("order_item")
+
+        order_item = get_object_or_404(
+            OrderItem,
+            id=order_item_id,
+            suborder__order__customer=customer
+        )
 
         Review.objects.create(
             product=product,
             customer=customer,
+            order_item=order_item,
             rating=rating,
             title=title,
             text=text
@@ -576,7 +591,8 @@ def write_review(request, product_id):
         return redirect("product_detail", product_id=product.id)
 
     return render(request, "marketplace/write_review.html", {
-        "product": product
+        "product": product,
+        "available_items": available_items
     })
 
 def reorder(request, order_id):

@@ -68,7 +68,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
     unit = models.CharField(max_length=50)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField(default=0)
 
     status = models.CharField(
         max_length=20,
@@ -185,15 +185,18 @@ class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
     customer = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
 
-    rating = models.IntegerField()  # 1–5
+    order_item = models.OneToOneField(
+        OrderItem,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    rating = models.IntegerField()
     title = models.CharField(max_length=255)
     text = models.TextField()
 
     created_at = models.DateTimeField(default=timezone.now)
-
-    # Important for case study (step 15/16)
-    class Meta:
-        unique_together = ("product", "customer")
 
     def __str__(self):
         return f"{self.product.name} - {self.rating}"
@@ -221,7 +224,7 @@ class RecurringOrderItem(models.Model):
         related_name="items"
     )
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
@@ -247,7 +250,7 @@ class ScheduledOrderItem(models.Model):
         related_name="items"
     )
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"

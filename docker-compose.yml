@@ -1,7 +1,10 @@
+
+
 services:
   bfn_mysql:
     image: mysql:8.0
     container_name: bfn_mysql
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: 1324321
       MYSQL_DATABASE: bfn_db
@@ -19,7 +22,18 @@ services:
   bfn_django:
     build: .
     container_name: bfn_django
-    command: python manage.py runserver 0.0.0.0:8000
+    restart: always
+    command: >
+      sh -c "
+      echo 'Waiting for MySQL...';
+      until python -c 'import pymysql; pymysql.connect(host=\"bfn_mysql\", user=\"bfn_user\", password=\"bfn_password\", database=\"bfn_db\", port=3306)'; do
+        echo 'MySQL not ready...';
+        sleep 2;
+      done;
+      echo 'MySQL is ready!';
+      python manage.py migrate;
+      python manage.py runserver 0.0.0.0:8000;
+      "
     depends_on:
       bfn_mysql:
         condition: service_healthy
@@ -28,6 +42,6 @@ services:
     environment:
       - DJANGO_DB_HOST=bfn_mysql
       - DJANGO_DB_PORT=3306
-      
+
 volumes:
   bfn_db_data:

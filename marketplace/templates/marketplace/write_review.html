@@ -108,6 +108,14 @@
 
         <form method="post">
             {% csrf_token %}
+            <label>Select purchase:</label>
+            <select name="order_item" required>
+                {% for item in available_items %}
+                    <option value="{{ item.id }}">
+                        Bought on {{ item.suborder.order.created_at|date:"Y-m-d" }}
+                    </option>
+                {% endfor %}
+            </select>
 
             <label>Rating</label>
             <div class="rating">
