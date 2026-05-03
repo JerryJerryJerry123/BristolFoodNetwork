@@ -121,6 +121,13 @@
     value="{{ product.discount_percentage }}"
 >
 
+<label>Surplus Note (Optional)</label>
+<textarea 
+    name="surplus_note" 
+    placeholder="e.g. Perfect condition, must sell quickly"
+    style="width:100%; padding:10px; border-radius:8px; border:1px solid #d1d5db; margin-bottom:10px;"
+>{{ product.surplus_note }}</textarea>
+
 <button type="submit">Save Changes</button>
 
 </form>

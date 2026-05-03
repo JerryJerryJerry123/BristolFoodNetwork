@@ -92,6 +92,10 @@ class Product(models.Model):
     
     season_end_month = models.CharField(max_length=20, blank=True, null=True)
 
+    surplus_expiry = models.DateTimeField(null=True, blank=True)
+
+    surplus_note = models.TextField(blank=True, null=True)
+
     def __str__(self):
         return self.name
     

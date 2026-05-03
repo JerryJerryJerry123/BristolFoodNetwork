@@ -166,6 +166,13 @@
             {% endif %}
         </div>
 
+        {% if product.surplus_note %}
+            <div style="margin-top:15px; padding:12px; background:#fff3cd; border-radius:8px; border:1px solid #ffeeba;">
+                <strong>Last Minute Deal</strong><br>
+                {{ product.surplus_note }}
+            </div>
+        {% endif %}
+
         <hr>
 
         <h2>Allergen Information</h2>

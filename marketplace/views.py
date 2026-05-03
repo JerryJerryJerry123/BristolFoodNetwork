@@ -412,7 +412,8 @@ def checkout(request):
                 item.product.quantity -= item.quantity
                 item.product.save()
 
-                subtotal += item.line_total
+                price = item.product.discounted_price
+                subtotal += price * item.quantity
 
             suborder.subtotal = subtotal
             suborder.save()
@@ -556,41 +557,44 @@ def edit_product(request, product_id):
 
             if quantity < 0:
                 messages.error(request, "Quantity cannot be negative.")
-                return redirect("producer_products")
+                return redirect("edit_product", product_id=product.id)
 
             product.quantity = quantity
 
         except ValueError:
             messages.error(request, "Invalid quantity value.")
-            return redirect("producer_products")
-            
+            return redirect("edit_product", product_id=product.id)
+
         product.status = request.POST.get("status")
         product.season_start_month = request.POST.get("season_start_month", "").strip()
         product.season_end_month = request.POST.get("season_end_month", "").strip()
 
         product.is_surplus = request.POST.get("is_surplus") == "on"
 
+        # Discount handling
         try:
             discount = int(request.POST.get("discount_percentage", 0))
         except ValueError:
             discount = 0
 
-        if discount < 0:
-            discount = 0
+        discount = max(0, min(discount, 100))
 
-        if discount > 100:
-            discount = 100
+        if product.is_surplus:
+            product.discount_percentage = discount
+            product.surplus_expiry = timezone.now() + timedelta(hours=48)
+            product.surplus_note = request.POST.get("surplus_note", "").strip()
+        else:
+            product.discount_percentage = 0
+            product.surplus_expiry = None
+            product.surplus_note = ""
 
-        product.discount_percentage = discount
-
-        if product.status == "all_year":
-            product.season_start_month = ""
-            product.season_end_month = ""
-
+        # ✅ SAVE (YOU WERE MISSING THIS)
         product.save()
 
+        # ✅ SUCCESS MESSAGE
         messages.success(request, "Product updated successfully")
 
+        # ✅ REDIRECT (PREVENT FORM RESUBMIT)
         return redirect("producer_products")
 
     return render(request, "marketplace/edit_product.html", {
