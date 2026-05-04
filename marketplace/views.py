@@ -357,20 +357,11 @@ def checkout(request):
         for item in cart_items:
             if item.quantity > item.product.quantity:
                 messages.error(request, f"Not enough stock for {item.product.name}")
-<<<<<<< HEAD
                 return render(request, "marketplace/checkout.html", {
                     "cart": cart
                 })
  
         # CREATE ORDER
-
-=======
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-        # =========================
-        # CREATE ORDER
-        # =========================
->>>>>>> c71856ac1916a94d290f45be482dff083cb9290a
         special_instructions = ""
 
         if request.user.customerprofile.account_type == "organisation":
@@ -841,3 +832,31 @@ def cancel_suborder(request, suborder_id):
             )
 
     return redirect('order_history')
+
+@login_required
+def producer_cancel_suborder(request, suborder_id):
+        suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+        # Ensure this producer owns this suborder
+        if suborder.producer != request.user:
+            return redirect("producer_orders")
+
+        if request.method == "POST" and suborder.status == "pending":
+
+            # RESTORE STOCK
+            for item in suborder.items.all():
+                product = item.product
+                product.quantity += item.quantity
+                product.save()
+
+            # Cancel
+            suborder.status = "cancelled"
+            suborder.save()
+
+            # Notify customer
+            Notification.objects.create(
+                customer=suborder.order.customer,
+                message=f"Producer cancelled your Order #{suborder.order.id}."
+            )
+
+        return redirect("producer_orders")

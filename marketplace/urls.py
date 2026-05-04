@@ -21,7 +21,8 @@ from .views import (create_product,
                     edit_scheduled_order,
                     content,
                     view_content,
-                    cancel_suborder
+                    cancel_suborder,
+                    producer_cancel_suborder,
                     )
 
 
@@ -56,5 +57,5 @@ urlpatterns = [
     path("orders/<int:suborder_id>/cancel/", cancel_suborder, name="cancel_suborder"),
     path("recurring/", recurring_orders, name="recurring_orders"),
     path('scheduled/<int:order_id>/edit/', edit_scheduled_order, name='edit_scheduled_order'),
-
+    path("producer/suborder/<int:suborder_id>/cancel/", producer_cancel_suborder, name="producer_cancel_suborder"),
 ]

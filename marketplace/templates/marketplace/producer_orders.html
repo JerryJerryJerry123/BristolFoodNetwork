@@ -115,6 +115,22 @@
                             {{ suborder.get_status_display }}
                         </span>
                     </div>
+                    {% if suborder.status == "pending" %}
+                    <form method="POST" action="{% url 'producer_cancel_suborder' suborder.id %}">
+                        {% csrf_token %}
+                        <button type="submit" style="
+                            margin-top:10px;
+                            padding:8px 12px;
+                            background:#ef4444;
+                            color:white;
+                            border:none;
+                            border-radius:6px;
+                            cursor:pointer;
+                        ">
+                            Cancel Order
+                        </button>
+                    </form>
+                    {% endif %}
 
                     <div class="section">
                         <strong>Total:</strong>
