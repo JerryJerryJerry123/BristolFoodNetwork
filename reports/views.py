@@ -16,9 +16,7 @@ def financial_report(request):
 
     COMMISSION_RATE = Decimal("0.05")
 
-    # -----------------------------
     # Step 1: Date filters
-    # -----------------------------
     end_date = timezone.now()
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -35,9 +33,8 @@ def financial_report(request):
     if end_date > timezone.now():
         end_date = timezone.now()
 
-    # -----------------------------
+
     # Step 2: SubOrders in period (ignore cancelled)
-    # -----------------------------
     suborders = SubOrder.objects.filter(
         order__created_at__range=[start_date, end_date]
     ).exclude(status="cancelled")
@@ -57,9 +54,8 @@ def financial_report(request):
     # Distinct orders count (ignore cancelled suborders)
     num_orders = suborders.values('order').distinct().count()
 
-    # -----------------------------
+
     # Step 3: YTD confirmed commission (delivered only)
-    # -----------------------------
     ytd_start = timezone.make_aware(datetime(end_date.year, 1, 1))
     ytd_suborders = SubOrder.objects.filter(
         order__created_at__gte=ytd_start,
@@ -69,9 +65,7 @@ def financial_report(request):
     ytd_total = ytd_suborders.aggregate(total=Sum('subtotal'))['total'] or Decimal('0')
     ytd_commission = ytd_total * COMMISSION_RATE
 
-    # -----------------------------
     # Step 4: Breakdown per order / suborder
-    # -----------------------------
     orders = Order.objects.filter(
         created_at__range=[start_date, end_date]
     ).distinct()
@@ -95,9 +89,8 @@ def financial_report(request):
             'suborders': suborders_list,
         })
 
-    # -----------------------------
+
     # Step 5: CSV export
-    # -----------------------------
     if request.GET.get('export') == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="financial_report.csv"'
@@ -121,9 +114,7 @@ def financial_report(request):
                 ])
         return response
 
-    # -----------------------------
     # Step 6: Render HTML
-    # -----------------------------
     return render(request, "reports/financial_report.html", {
         'orders': order_data,
         'start_date': start_date,

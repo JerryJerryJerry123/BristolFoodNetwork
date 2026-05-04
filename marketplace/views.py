@@ -357,11 +357,11 @@ def checkout(request):
         for item in cart_items:
             if item.quantity > item.product.quantity:
                 messages.error(request, f"Not enough stock for {item.product.name}")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-        # =========================
+                return render(request, "marketplace/checkout.html", {
+                    "cart": cart
+                })
+ 
         # CREATE ORDER
-        # =========================
         special_instructions = ""
 
         if request.user.customerprofile.account_type == "organisation":
@@ -729,7 +729,6 @@ def mark_ready(request, suborder_id):
                 customer=suborder.order.customer,
                 message=f"Your order #{suborder.order.id} is ready for delivery!"
             )
-
     return redirect('producer_orders')
 
 @login_required
@@ -811,19 +810,53 @@ def edit_scheduled_order(request, order_id):
 def cancel_suborder(request, suborder_id):
     suborder = get_object_or_404(SubOrder, id=suborder_id)
 
-    # Ensure the current user owns the order
     if suborder.order.customer.user != request.user:
-        return redirect('order_history')  # or your customer orders page
+        return redirect('order_history')
 
     if request.method == "POST":
         if suborder.status == "pending":
+
+            #RESTORE STOCK
+            for item in suborder.items.all():  # <-- change to your related_name
+                product = item.product
+                product.quantity += item.quantity
+                product.save()
+
+            #Cancel
             suborder.status = "cancelled"
             suborder.save()
 
-            # optional: notify producer
             Notification.objects.create(
                 customer=suborder.order.customer,
                 message=f"You cancelled Order #{suborder.order.id}."
             )
 
     return redirect('order_history')
+
+@login_required
+def producer_cancel_suborder(request, suborder_id):
+        suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+        # Ensure this producer owns this suborder
+        if suborder.producer != request.user:
+            return redirect("producer_orders")
+
+        if request.method == "POST" and suborder.status == "pending":
+
+            # RESTORE STOCK
+            for item in suborder.items.all():
+                product = item.product
+                product.quantity += item.quantity
+                product.save()
+
+            # Cancel
+            suborder.status = "cancelled"
+            suborder.save()
+
+            # Notify customer
+            Notification.objects.create(
+                customer=suborder.order.customer,
+                message=f"Producer cancelled your Order #{suborder.order.id}."
+            )
+
+        return redirect("producer_orders")

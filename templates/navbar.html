@@ -56,6 +56,8 @@
                     {% endif %}
                     {% if user.customerprofile %}
                     <a href="/marketplace/cart/">View Cart</a>
+                    <a href="{% url 'order_history' %}">Order History</a>
+                    <a href="/notifications" >Notifications</a>
                 {% endif %}
 
                 <form method="post" action="/logout/" style="display:inline; border: none; color: white; background: none;">
