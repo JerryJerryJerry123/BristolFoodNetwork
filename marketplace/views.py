@@ -340,7 +340,7 @@ def checkout(request):
 
             # Expiry check
             try:
-                expiry_date = datetime.strptime(expiry, "%Y-%m")
+                expiry_date = datetime.strptime(expiry, "%m/%y")
                 current_month = datetime.now().replace(day=1)
 
                 if expiry_date < current_month:
