@@ -330,9 +330,6 @@ def checkout(request):
                 return render(request, "marketplace/checkout.html", {
                     "cart": cart
                 })
-
-  
-        # CREATE ORDER
  
         # CREATE ORDER
 
@@ -675,7 +672,6 @@ def mark_ready(request, suborder_id):
                 customer=suborder.order.customer,
                 message=f"Your order #{suborder.order.id} is ready for delivery!"
             )
-
     return redirect('producer_orders')
 
 @login_required
@@ -757,16 +753,22 @@ def edit_scheduled_order(request, order_id):
 def cancel_suborder(request, suborder_id):
     suborder = get_object_or_404(SubOrder, id=suborder_id)
 
-    # Ensure the current user owns the order
     if suborder.order.customer.user != request.user:
-        return redirect('order_history')  # or your customer orders page
+        return redirect('order_history')
 
     if request.method == "POST":
         if suborder.status == "pending":
+
+            #RESTORE STOCK
+            for item in suborder.items.all():  # <-- change to your related_name
+                product = item.product
+                product.quantity += item.quantity
+                product.save()
+
+            #Cancel
             suborder.status = "cancelled"
             suborder.save()
 
-            # optional: notify producer
             Notification.objects.create(
                 customer=suborder.order.customer,
                 message=f"You cancelled Order #{suborder.order.id}."
