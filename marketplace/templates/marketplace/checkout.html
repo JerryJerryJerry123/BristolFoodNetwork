@@ -7,7 +7,7 @@
         body{
             font-family: Arial, sans-serif;
             margin:0;
-            background:#f7f7f7;
+            background:#f3f4f6;
             text-align:center;
         }
 
@@ -32,41 +32,67 @@
             box-shadow:0 2px 6px rgba(0,0,0,0.08);
         }
 
-        .badge{
-            display:inline-block;
-            padding:4px 8px;
-            border-radius:999px;
-            background:#e5e7eb;
-            font-size:12px;
-            margin-top:6px;
-        }
-
-        input[type="date"]{
+        input[type="text"],
+        input[type="date"],
+        textarea{
             width:100%;
-            padding:8px;
+            padding:10px;
             border-radius:8px;
-            border:1px solid #d1d5db;
-            margin-top:8px;
+            border:1px solid #ccc;
+            margin-top:6px;
             margin-bottom:12px;
         }
 
         button{
-            padding:10px 16px;
+            padding:12px;
             border:none;
             border-radius:10px;
             background:#2563eb;
             color:white;
             cursor:pointer;
+            width:100%;
         }
 
         button:hover{
             filter:brightness(0.95);
         }
 
-        .total-box{
-            margin-top:25px;
-            font-size:18px;
+        .payment-box{
+            max-width:600px;
+            margin:30px auto;
+            background:white;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.1);
+            text-align:left;
         }
+
+        .row{
+            display:flex;
+            gap:15px;
+        }
+
+        .field{
+            flex:1;
+        }
+
+        .field.small{
+            flex:0.4;
+        }
+
+        /* FIXED RADIO ALIGNMENT */
+        .radio-option{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin:10px 0;
+            cursor:pointer;
+        }
+
+        .radio-option input{
+            transform:scale(1.2);
+        }
+
     </style>
 </head>
 
@@ -75,29 +101,17 @@
 {% include "navbar.html" %}
 
 <div class="container">
+
     <h1>Checkout</h1>
-    
-    <h2>Delivery Address</h2>
-
-        <div style="max-width:500px;margin:20px auto;background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.08);text-align:left;">
-
-            <strong>{{ user.customerprofile.full_name }}</strong><br>
-
-            {{ user.customerprofile.delivery_address }}<br>
-            {{ user.customerprofile.postcode }}<br><br>
-
-            Phone: {{ user.customerprofile.phone }}
-
-        </div>
 
     {% if messages %}
-    <div style="max-width:600px;margin:20px auto;text-align:left;">
-        {% for message in messages %}
-            <div style="background:#fee2e2;border:1px solid #fecaca;padding:10px;border-radius:8px;margin-bottom:10px;">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
+        <div style="max-width:600px;margin:20px auto;text-align:left;">
+            {% for message in messages %}
+                <div style="background:#fee2e2;padding:10px;border-radius:8px;margin-bottom:10px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 
     <form method="post">
@@ -109,93 +123,117 @@
             {% for producer in producer_list %}
                 <div class="card">
 
-                    <h3>
-                        {% if producer.grouper.producerprofile %}
-                            {{ producer.grouper.producerprofile.business_name }}
-                        {% else %}
-                            {{ producer.grouper.username }}
-                        {% endif %}
-                    </h3>
+                    <h3>{{ producer.grouper.username }}</h3>
 
                     <ul>
                         {% for item in producer.list %}
-                    <li>
-                        <strong>{{ item.product.name }}</strong><br>
-                    
-                        {% if item.product.is_surplus and item.product.has_discount %}
-                            <span style="text-decoration:line-through;">
-                                £{{ item.product.price|floatformat:2 }}
-                            </span>
-                            <strong>
-                                £{{ item.product.discounted_price|floatformat:2 }}
-                            </strong>
-                            <span class="badge">{{ item.product.discount_percentage }}% off</span>
-                        {% else %}
-                            £{{ item.product.price|floatformat:2 }}
-                        {% endif %}
-                        
-                        x {{ item.quantity|floatformat:2 }}
-                        = £{{ item.line_total|floatformat:2 }}
-                    </li>
+                            <li>
+                                {{ item.product.name }} - £{{ item.line_total }}
+                            </li>
                         {% endfor %}
                     </ul>
 
-                    <label>
-                        <strong>Delivery Date</strong>
-                        <span class="badge">(Minimum 48 hours)</span>
-                    </label>
-
-                    <input type="date"
-                           name="delivery_date_{{ producer.grouper.id }}"
-                           required>
+                    <label>Delivery Date</label>
+                    <input type="date" name="delivery_date_{{ producer.grouper.id }}" required>
 
                 </div>
             {% endfor %}
         </div>
 
-        <h3>Payment Method</h3>
+        <!-- PAYMENT BOX -->
+        <div class="payment-box">
 
-        <label>
-            <input type="radio" name="payment_method" value="card" required>
-            Credit Card
-        </label>
+            <h3>Payment Method</h3>
 
-        <label>
-            <input type="radio" name="payment_method" value="paypal">
-            PayPal
-        </label>
+            <label class="radio-option">
+                <input type="radio" name="payment_method" value="card" required>
+                <span>Credit Card</span>
+            </label>
 
-        <br><br>
-        <label>
-            <input type="checkbox" name="recurring">
-            Make this a recurring order
-        </label>
+            <label class="radio-option">
+                <input type="radio" name="payment_method" value="paypal">
+                <span>PayPal</span>
+            </label>
 
+            <h3 style="margin-top:20px;">Card Details</h3>
 
-        <br><br>
+            <!-- Card Number -->
+            <label>Card Number</label>
+            <input 
+                type="text" 
+                name="card_number"
+                maxlength="12"
+                placeholder="123456789012"
+                pattern="\d{12}"
+            >
 
-        <h3>Card Details</h3>
+            <!-- Expiry + CVV -->
+            <div class="row">
 
-        <label>Card Number</label><br>
-        <input type="text" name="card_number" placeholder="4242 4242 4242 4242"><br><br>
+                <!-- Expiry -->
+                <div class="field">
+                    <label>Expiry (MM/YY)</label>
+                    <input 
+                        type="text"
+                        name="expiry"
+                        placeholder="MM/YY"
+                        maxlength="5"
+                        pattern="\d{2}/\d{2}"
+                    >
+                </div>
 
-        <label>Expiry Date</label><br>
-        <input type="text" name="expiry" placeholder="MM/YY"><br><br>
+                <!-- CVV -->
+                <div class="field small">
+                    <label>CVV</label>
+                    <input 
+                        type="text"
+                        name="cvv"
+                        placeholder="123"
+                        maxlength="3"
+                        pattern="\d{3}"
+                    >
+                </div>
 
-        <label>CVV</label><br>
-        <input type="text" name="cvv" placeholder="123"><br><br>
+            </div>
 
-        {% if user.customerprofile.account_type == 'organisation' %}
-            <h3>Special Delivery Instructions</h3>
-            <textarea name="special_instructions"></textarea>
-        {% endif %}
+            {% if user.customerprofile.account_type == 'organisation' %}
+                <label>Special Delivery Instructions</label>
+                <textarea name="special_instructions"></textarea>
+            {% endif %}
 
-        <div class="total-box">
             <button type="submit">Confirm Order</button>
+
         </div>
 
     </form>
+
 </div>
+
+<!-- ✅ ONLY NUMBERS FOR CARD + CVV -->
+<script>
+document.querySelectorAll('input[name="card_number"], input[name="cvv"]').forEach(input => {
+    input.addEventListener("input", () => {
+        input.value = input.value.replace(/\D/g, '');
+    });
+});
+</script>
+
+<!-- ✅ AUTO FORMAT MM/YY -->
+<script>
+const expiryInput = document.querySelector('input[name="expiry"]');
+
+if (expiryInput) {
+    expiryInput.addEventListener("input", () => {
+        let value = expiryInput.value.replace(/\D/g, '');
+
+        if (value.length >= 3) {
+            value = value.slice(0,2) + "/" + value.slice(2,4);
+        }
+
+        expiryInput.value = value;
+    });
+}
+</script>
 
 </body>
 </html>

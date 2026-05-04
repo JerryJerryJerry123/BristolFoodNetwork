@@ -299,40 +299,78 @@ def checkout(request):
 
     if request.method == "POST":
 
-        
+        import re
+        from datetime import datetime
+
+        # =========================
         # PAYMENT VALIDATION
-  
+        # =========================
         payment_method = request.POST.get("payment_method")
 
         if not payment_method:
             messages.error(request, "Please select a payment method.")
-            return render(request, "marketplace/checkout.html", {
-                "cart": cart
-            })
+            return render(request, "marketplace/checkout.html", {"cart": cart})
 
+        # FORCE validation if card selected
         if payment_method == "card":
+
+            import re
+            from datetime import datetime
+
             card_number = request.POST.get("card_number", "").strip()
             expiry = request.POST.get("expiry", "").strip()
             cvv = request.POST.get("cvv", "").strip()
 
+            print("DEBUG:", card_number, expiry, cvv)  # 👈 TEMP DEBUG
+
+            # Empty check
             if not card_number or not expiry or not cvv:
                 messages.error(request, "Please enter card details.")
-                return render(request, "marketplace/checkout.html", {
-                    "cart": cart
-                })
+                return render(request, "marketplace/checkout.html", {"cart": cart})
 
-    
+            # Card number check
+            if not re.fullmatch(r"\d{12}", card_number):
+                messages.error(request, "Card number must be exactly 12 digits.")
+                return render(request, "marketplace/checkout.html", {"cart": cart})
+
+            # CVV check
+            if not re.fullmatch(r"\d{3}", cvv):
+                messages.error(request, "CVV must be exactly 3 digits.")
+                return render(request, "marketplace/checkout.html", {"cart": cart})
+
+            # Expiry check
+            try:
+                expiry_date = datetime.strptime(expiry, "%Y-%m")
+                current_month = datetime.now().replace(day=1)
+
+                if expiry_date < current_month:
+                    messages.error(request, "Card expiry date cannot be in the past.")
+                    return render(request, "marketplace/checkout.html", {"cart": cart})
+
+            except ValueError:
+                messages.error(request, "Invalid expiry date format.")
+                return render(request, "marketplace/checkout.html", {"cart": cart})
+
+        # =========================
         # STOCK VALIDATION
-    
+        # =========================
         for item in cart_items:
             if item.quantity > item.product.quantity:
                 messages.error(request, f"Not enough stock for {item.product.name}")
+<<<<<<< HEAD
                 return render(request, "marketplace/checkout.html", {
                     "cart": cart
                 })
  
         # CREATE ORDER
 
+=======
+                return render(request, "marketplace/checkout.html", {"cart": cart})
+
+        # =========================
+        # CREATE ORDER
+        # =========================
+>>>>>>> c71856ac1916a94d290f45be482dff083cb9290a
         special_instructions = ""
 
         if request.user.customerprofile.account_type == "organisation":
@@ -342,7 +380,7 @@ def checkout(request):
             customer=request.user.customerprofile,
             special_instructions=special_instructions
         )
-        
+
         grouped_items = defaultdict(list)
 
         for item in cart_items:
@@ -357,17 +395,13 @@ def checkout(request):
 
             if not delivery_date_str:
                 messages.error(request, "Please select a delivery date.")
-                return render(request, "marketplace/checkout.html", {
-                    "cart": cart
-                })
+                return render(request, "marketplace/checkout.html", {"cart": cart})
 
             delivery_date = timezone.datetime.fromisoformat(delivery_date_str).date()
 
             if delivery_date < minimum_date.date():
                 messages.error(request, "Delivery must be at least 48 hours from now.")
-                return render(request, "marketplace/checkout.html", {
-                    "cart": cart
-                })
+                return render(request, "marketplace/checkout.html", {"cart": cart})
 
             suborder = SubOrder.objects.create(
                 order=order,
@@ -387,7 +421,8 @@ def checkout(request):
                 item.product.quantity -= item.quantity
                 item.product.save()
 
-                subtotal += item.line_total
+                price = item.product.discounted_price
+                subtotal += price * item.quantity
 
             suborder.subtotal = subtotal
             suborder.save()
@@ -397,12 +432,12 @@ def checkout(request):
         order.total_amount = total_amount
         order.save()
 
-  
-        # RECURRING ORDER 
- 
+        # =========================
+        # RECURRING ORDER
+        # =========================
         if request.POST.get("recurring"):
 
-            next_order_date = get_next_weekday(0)  # Monday
+            next_order_date = get_next_weekday(0)
 
             recurring = RecurringOrder.objects.create(
                 customer=request.user,
@@ -431,9 +466,9 @@ def checkout(request):
                     quantity=item.quantity
                 )
 
-
+        # =========================
         # CLEAR CART
-
+        # =========================
         cart.items.all().delete()
 
         messages.success(request, "Order placed successfully!")
@@ -526,34 +561,49 @@ def edit_product(request, product_id):
 
     if request.method == "POST":
 
-        product.quantity = request.POST.get("quantity")
+        try:
+            quantity = int(request.POST.get("quantity", 0))
+
+            if quantity < 0:
+                messages.error(request, "Quantity cannot be negative.")
+                return redirect("edit_product", product_id=product.id)
+
+            product.quantity = quantity
+
+        except ValueError:
+            messages.error(request, "Invalid quantity value.")
+            return redirect("edit_product", product_id=product.id)
+
         product.status = request.POST.get("status")
         product.season_start_month = request.POST.get("season_start_month", "").strip()
         product.season_end_month = request.POST.get("season_end_month", "").strip()
 
         product.is_surplus = request.POST.get("is_surplus") == "on"
 
+        # Discount handling
         try:
             discount = int(request.POST.get("discount_percentage", 0))
         except ValueError:
             discount = 0
 
-        if discount < 0:
-            discount = 0
+        discount = max(0, min(discount, 100))
 
-        if discount > 100:
-            discount = 100
+        if product.is_surplus:
+            product.discount_percentage = discount
+            product.surplus_expiry = timezone.now() + timedelta(hours=48)
+            product.surplus_note = request.POST.get("surplus_note", "").strip()
+        else:
+            product.discount_percentage = 0
+            product.surplus_expiry = None
+            product.surplus_note = ""
 
-        product.discount_percentage = discount
-
-        if product.status == "all_year":
-            product.season_start_month = ""
-            product.season_end_month = ""
-
+        # ✅ SAVE (YOU WERE MISSING THIS)
         product.save()
 
+        # ✅ SUCCESS MESSAGE
         messages.success(request, "Product updated successfully")
 
+        # ✅ REDIRECT (PREVENT FORM RESUBMIT)
         return redirect("producer_products")
 
     return render(request, "marketplace/edit_product.html", {
@@ -564,33 +614,48 @@ def edit_product(request, product_id):
 def write_review(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
-    # Must be a customer
     if not hasattr(request.user, "customerprofile"):
         return redirect("/")
 
     customer = request.user.customerprofile
 
-    # ❌ Prevent duplicate reviews
-    if Review.objects.filter(product=product, customer=customer).exists():
-        messages.error(request, "You have already reviewed this product.")
-        return redirect("product_detail", product_id=product.id)
-
-    # ❌ Only allow if purchased (basic check)
-    if not OrderItem.objects.filter(
+    # All purchases of this product
+    purchased_items = OrderItem.objects.filter(
         product=product,
         suborder__order__customer=customer
-    ).exists():
-        messages.error(request, "You can only review products you have purchased.")
+    )
+
+
+    if not purchased_items.exists():
+        messages.error(request, "You must purchase this item first.")
+        return redirect("product_detail", product_id=product.id)
+
+    # Purchases that haven't been reviewed yet
+    available_items = purchased_items.exclude(
+        id__in=Review.objects.filter(customer=customer)
+                             .values_list("order_item_id", flat=True)
+    )
+
+    if not available_items.exists():
+        messages.error(request, "You have already reviewed all your purchases of this product.")
         return redirect("product_detail", product_id=product.id)
 
     if request.method == "POST":
         rating = request.POST.get("rating")
         title = request.POST.get("title")
         text = request.POST.get("text")
+        order_item_id = request.POST.get("order_item")
+
+        order_item = get_object_or_404(
+            OrderItem,
+            id=order_item_id,
+            suborder__order__customer=customer
+        )
 
         Review.objects.create(
             product=product,
             customer=customer,
+            order_item=order_item,
             rating=rating,
             title=title,
             text=text
@@ -600,7 +665,8 @@ def write_review(request, product_id):
         return redirect("product_detail", product_id=product.id)
 
     return render(request, "marketplace/write_review.html", {
-        "product": product
+        "product": product,
+        "available_items": available_items
     })
 
 def reorder(request, order_id):

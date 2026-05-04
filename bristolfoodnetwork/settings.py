@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': 'bfn_db',
         'USER': 'bfn_user',
         'PASSWORD': 'bfn_password',
-        'HOST': 'bfn_mysql',      
+        'HOST': 'bfn_mysql',
         'PORT': '3306',
     }
 }

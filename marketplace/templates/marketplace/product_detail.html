@@ -151,7 +151,7 @@
         
             {% if product.status == "seasonal" %}
                 <span class="badge">In Season</span><br>
-        
+
                 {% if product.season_start_month and product.season_end_month %}
                     <span class="pill">
                         Available: {{ product.season_start_month }} - {{ product.season_end_month }}
@@ -165,6 +165,13 @@
                 <span class="badge">Out of Season</span>
             {% endif %}
         </div>
+
+        {% if product.surplus_note %}
+            <div style="margin-top:15px; padding:12px; background:#fff3cd; border-radius:8px; border:1px solid #ffeeba;">
+                <strong>Last Minute Deal</strong><br>
+                {{ product.surplus_note }}
+            </div>
+        {% endif %}
 
         <hr>
 

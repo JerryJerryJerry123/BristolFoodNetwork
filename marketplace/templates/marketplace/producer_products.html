@@ -77,7 +77,13 @@
 {% include "navbar.html" %}
 
 <h1>Product Management Dashboard</h1>
-
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
 <a href="/marketplace/">
     <button style="margin-bottom:20px;">⬅ Back to Marketplace</button>
 </a>
