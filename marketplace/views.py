@@ -13,6 +13,10 @@ from datetime import timedelta, date
 from collections import defaultdict
 from django.db.models import Avg
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
 from .models import (
     Product,
     Category,
@@ -860,3 +864,23 @@ def producer_cancel_suborder(request, suborder_id):
             )
 
         return redirect("producer_orders")
+
+@csrf_exempt
+def delivery_update(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST only"}, status=405)
+
+    data = json.loads(request.body)
+
+    suborder_id = data.get("suborder_id")
+    new_status = data.get("status")
+
+    try:
+        suborder = SubOrder.objects.get(id=suborder_id)
+    except SubOrder.DoesNotExist:
+        return JsonResponse({"error": "Invalid suborder"}, status=404)
+
+    suborder.status = new_status
+    suborder.save()
+
+    return JsonResponse({"success": True})
