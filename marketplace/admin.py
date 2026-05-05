@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Category
+from .models import Product, Category, SubOrder
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -36,3 +36,17 @@ class ProductAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-created_at",)
+
+@admin.register(SubOrder)
+class SubOrderAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "order",
+        "producer",
+        "status",
+        "delivery_date",
+        "subtotal",
+    )
+
+    list_filter = ("status", "delivery_date", "producer")
+    search_fields = ("order__id", "producer__username")
