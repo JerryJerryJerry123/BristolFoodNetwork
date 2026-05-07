@@ -27,6 +27,7 @@ from .views import (create_product,
                     stripe_webhook,
                     checkout,
                     payment_success,
+                    payment_cancelled,
                     )
 
 
@@ -66,4 +67,5 @@ urlpatterns = [
     path('stripe/webhook/', stripe_webhook),
     path("checkout/", checkout, name="checkout"),
     path("payment-success/", payment_success, name="payment_success"),
+    path("payment-cancelled/", payment_cancelled, name="payment_cancelled"),
 ]

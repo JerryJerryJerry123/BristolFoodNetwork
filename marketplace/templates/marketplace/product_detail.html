@@ -113,11 +113,11 @@
 
         <a class="muted-link" href="/marketplace/">← Back to Marketplace</a>
 
-        <!-- ✅ FIXED BUTTON (SAFE CHECK) -->
-        
+        {% if user.is_authenticated and user.customerprofile %}
         <a href="{% url 'write_review' product.id %}" class="review-btn">
              Write Review
         </a>
+        {% endif %}
         
 
         <div class="row">
@@ -197,19 +197,37 @@
         {% endif %}
 
         <hr>
-
+        <div class="row">
+            <strong>Stock Available:</strong> {{ product.quantity }}
+        </div>
         <h2>Add to Cart</h2>
+        {% if not user.is_authenticated %}
+            <p>You must <a href="/login/">log in</a> to order.</p>
 
-        {% if product.status == "out_of_season" or product.status == "unavailable" %}
+        {% elif product.quantity <= 0 %}
+            <p style="color:red;">
+                <strong>This product is out of stock.</strong>
+            </p>
+        {% elif user.producerprofile %}
+            <p style="color:red;"><strong>Producers cannot order products.</strong></p>
+
+        {% elif product.status == "out_of_season" or product.status == "unavailable" %}
             <p style="color:red;">
                 <strong>This product is currently unavailable and cannot be ordered.</strong>
             </p>
+
         {% else %}
             <form method="post" action="{% url 'add_to_cart' product.id %}">
                 {% csrf_token %}
             
                 <label for="qty">Quantity ({{ product.unit }}):</label>
-                <input id="qty" type="number" name="quantity" step="0.01" min="0.01" value="1">
+                <input id="qty" 
+       type="number" 
+       name="quantity" 
+       step="1" 
+       min="1" 
+       max="{{ product.quantity }}" 
+       value="1">
                 <button type="submit">Add to Cart</button>
             </form>
         {% endif %}

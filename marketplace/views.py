@@ -293,7 +293,7 @@ def update_cart_item(request, item_id):
 
     cart = _get_customer_cart(request.user)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
-
+    
     if request.method == "POST":
         qty_str = request.POST.get("quantity", "").strip()
 
@@ -306,10 +306,18 @@ def update_cart_item(request, item_id):
         if qty <= 0:
             item.delete()
             messages.success(request, "Item removed from cart.")
-        else:
-            item.quantity = qty
-            item.save()
-            messages.success(request, "Cart updated.")
+            return redirect("view_cart")
+
+        if qty > item.product.quantity:
+            messages.error(
+                request,
+                f"Only {item.product.quantity} units of {item.product.name} are available."
+            )
+            return redirect("view_cart")
+
+        item.quantity = qty
+        item.save()
+        messages.success(request, "Cart updated.")
 
     return redirect("view_cart")
 
@@ -324,8 +332,17 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @login_required
 def checkout(request):
     cart = _get_customer_cart(request.user)
+    recurring = request.POST.get("recurring") == "true"
     cart_items = cart.items.select_related("product__producer")
-
+    for item in cart_items:
+        if item.quantity > item.product.quantity:
+            messages.error(
+                request,
+                f"Not enough stock for {item.product.name}. "
+                f"Available: {item.product.quantity}"
+            )
+            return redirect("view_cart")  # send user back to cart
+        
     if not cart_items.exists():
         messages.error(request, "Your cart is empty.")
         return redirect("view_cart")
@@ -354,13 +371,19 @@ def checkout(request):
         metadata={
             "user_id": str(request.user.id),
             "cart_id": str(cart.id),
+            "recurring": "true" if recurring else "false",
         }
     )
 
     return redirect(session.url)
 
+@login_required
 def payment_success(request):
-    return HttpResponse("Payment received. You can close this page.")
+    return render(request, "marketplace/payment_success.html")
+
+@login_required
+def payment_cancelled(request):
+    return render(request, "marketplace/payment_cancelled.html")
 
 @login_required
 def recurring_orders(request):
@@ -819,7 +842,7 @@ def handle_successful_payment(session):
         return
 
     try:
-        customer = user.customerprofile
+        customer_profile = user.customerprofile
     except CustomerProfile.DoesNotExist:
         print(f"User {user_id} has no customer profile — ignoring webhook")
         return
@@ -846,7 +869,7 @@ def handle_successful_payment(session):
     # CREATE ORDER
     # =========================
     order = Order.objects.create(
-        customer=customer,
+        customer=customer_profile,
         stripe_session_id=session_id
     )
 
@@ -880,7 +903,7 @@ def handle_successful_payment(session):
             item.product.quantity -= item.quantity
             item.product.save()
 
-            price = item.product.discounted_price
+            price = item.product.discounted_price or item.product.price
             subtotal += price * item.quantity
 
         suborder.subtotal = subtotal
@@ -898,20 +921,46 @@ def handle_successful_payment(session):
     # =========================
     if metadata.get("recurring") == "true":
 
-        recurring = RecurringOrder.objects.create(
-            customer=customer,
-            frequency="weekly",
-            day_of_week="Monday",
-            delivery_day="Wednesday",
-            next_order_date=get_next_weekday(0)
-        )
-
-        for item in cart_items:
-            RecurringOrderItem.objects.create(
-                recurring_order=recurring,
-                product=item.product,
-                quantity=item.quantity
+        try:
+            # 1. Create the recurring order definition
+            recurring = RecurringOrder.objects.create(
+                customer=user,
+                frequency="weekly",
+                day_of_week="Monday",
+                delivery_day="Wednesday",
+                next_order_date=get_next_weekday(0)
             )
+
+            # 2. Create the first scheduled order
+            scheduled = ScheduledOrder.objects.create(
+                recurring_order=recurring,
+                scheduled_date=recurring.next_order_date
+            )
+
+            # 3. Copy items into both recurring + scheduled
+            for item in cart_items:
+
+                # Recurring template items
+                RecurringOrderItem.objects.create(
+                    recurring_order=recurring,
+                    product=item.product,
+                    quantity=item.quantity
+                )
+
+                # First scheduled order items
+                ScheduledOrderItem.objects.create(
+                    scheduled_order=scheduled,
+                    product=item.product,
+                    quantity=item.quantity
+                )
+
+            print("RECURRING ORDER + FIRST SCHEDULED ORDER CREATED")
+
+        except Exception as e:
+            print("RECURRING ORDER ERROR:", e)
+            import traceback
+            traceback.print_exc()
+            # Do NOT crash webhook
 
     # =========================
     # CLEAR CART

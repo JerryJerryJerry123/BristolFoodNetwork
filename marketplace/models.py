@@ -80,7 +80,7 @@ class Product(models.Model):
     is_surplus = models.BooleanField(default=False)
     discount_percentage = models.IntegerField(default=0)
     organic_certified = models.BooleanField(default=False)
-    allergen_info = models.JSONField(blank=True, null=True)
+    allergen_info = models.TextField(blank=True, null=True)
     harvest_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     season_start_month = models.CharField(max_length=20, blank=True, null=True)

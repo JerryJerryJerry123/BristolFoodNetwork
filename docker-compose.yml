@@ -23,6 +23,8 @@ services:
     build: .
     container_name: bfn_django
     restart: always
+    env_file:
+      - .env
     command: >
       sh -c "
       echo 'Waiting for MySQL...';
@@ -53,6 +55,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - bfn_django
+    
 
 volumes:
   bfn_db_data:
