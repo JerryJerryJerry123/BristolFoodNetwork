@@ -360,7 +360,9 @@ def checkout(request):
             },
             "quantity": int(item.quantity),
         })
-
+    special_instructions = request.POST.get("special_instructions", "")
+    if request.user.customerprofile.account_type != "organisation":
+        special_instructions = ""
     # ⬅️ OUTSIDE the loop
     session = stripe.checkout.Session.create(
         payment_method_types=['card'],
@@ -372,6 +374,7 @@ def checkout(request):
             "user_id": str(request.user.id),
             "cart_id": str(cart.id),
             "recurring": "true" if recurring else "false",
+            "special_instructions": special_instructions,
         }
     )
 
@@ -824,7 +827,7 @@ def handle_successful_payment(session):
     # =========================
     session_id = session.get("id")
     metadata = session.get("metadata") or {}
-
+    special_instructions = metadata.get("special_instructions", "").strip()
     # Duplicate protection
     if Order.objects.filter(stripe_session_id=session_id).exists():
         print("Order already exists — ignoring duplicate webhook")
@@ -872,10 +875,17 @@ def handle_successful_payment(session):
     # =========================
     # CREATE ORDER
     # =========================
-    order = Order.objects.create(
-        customer=customer_profile,
-        stripe_session_id=session_id
-    )
+    if customer_profile.account_type == "organisation":
+        order = Order.objects.create(
+            customer=customer_profile,
+            stripe_session_id=session_id,
+            special_instructions=special_instructions,
+        )
+    else:
+        order = Order.objects.create(
+            customer=customer_profile,
+            stripe_session_id=session_id,
+        )
 
     grouped_items = defaultdict(list)
     for item in cart_items:

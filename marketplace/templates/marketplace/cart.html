@@ -171,11 +171,19 @@
             <div class="total">
                 <strong>Total Food Miles:</strong> {{ total_food_miles }} miles
             </div>
-            
             <div style="margin-top:20px; text-align:right;">
                 <form method="post" action="{% url 'checkout' %}">
                     {% csrf_token %}
-
+                    {% if request.user.customerprofile.account_type == "organisation" %}
+                        <div style="margin-top:20px;">
+                            <label for="special_instructions"><strong>Special Instructions</strong></label><br>
+                            <textarea name="special_instructions"
+                                    id="special_instructions"
+                                    rows="4"
+                                    style="width:100%; padding:10px; border-radius:8px; border:1px solid #d1d5db; margin-top:8px;"
+                                    placeholder="Enter delivery instructions, access notes, or organisation requirements..."></textarea>
+                        </div>
+                    {% endif %}
                     <label style="margin-right:10px;">
                         <input type="checkbox" name="recurring" value="true">
                         Make this a weekly recurring order

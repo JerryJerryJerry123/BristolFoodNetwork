@@ -81,12 +81,20 @@
             font-size:12px;
             color:white;
         }
-
         .badge.pending{ background:#f59e0b; }     /* yellow */
         .badge.ready{ background:#fb923c; }       /* orange */
         .badge.delivered{ background:#22c55e; }   /* green */
         .badge.cancelled{ background:#ef4444; }   /* red */
         .badge.failed { background:#ef4444; }
+        .badge-instructions {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +115,14 @@
                 <div class="order">
                     <h3>Order #{{ order.id }} - {{ order.created_at|date:"Y-m-d H:i" }}</h3>
                     <p class="total">Total Amount: £{{ order.total_amount }}</p>
+                    {% if order.special_instructions %}
+                        <details style="margin-top:8px;">
+                            <summary style="cursor:pointer; color:#2563eb;">View Instructions</summary>
+                            <div style="margin-top:6px; background:#f3f4f6; padding:10px; border-radius:8px;">
+                                {{ order.special_instructions }}
+                            </div>
+                        </details>
+                    {% endif %}
                     {% for suborder in order.suborders.all %}
                         <div class="suborder">
                             {% if suborder.status == "pending" %}
