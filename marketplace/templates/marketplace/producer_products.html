@@ -68,6 +68,27 @@
         td button:hover{
             filter:brightness(0.95);
         }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .badge-out {
+            background: #dc2626; /* red */
+        }
+
+        .badge-low {
+            background: #f59e0b; /* amber */
+        }
+
+        .badge-ok {
+            background: #16a34a; /* green */
+        }
+
     </style>
 
 </head>
@@ -99,8 +120,23 @@
 {% for product in products %}
 <tr>
     <td>{{ product.name }}</td>
-    <td>{{ product.quantity }} {{ product.unit }}</td>
+
+    <td>
+        {{ product.quantity }} {{ product.unit }}
+
+        {% if product.quantity == 0 %}
+            <span class="badge badge-out">Out of Stock</span>
+
+        {% elif product.quantity <= 5 %}
+            <span class="badge badge-low">Low Stock</span>
+
+        {% else %}
+            <span class="badge badge-ok">In Stock</span>
+        {% endif %}
+    </td>
+
     <td>{{ product.get_status_display }}</td>
+
     <td>
         <a href="{% url 'edit_product' product.id %}">
             <button>Edit / Update Stock</button>
@@ -108,5 +144,6 @@
     </td>
 </tr>
 {% endfor %}
+
 
 </table>
