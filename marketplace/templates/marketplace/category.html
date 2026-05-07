@@ -81,42 +81,50 @@
 
     <p><a href="{% url 'marketplace_home' %}">← Back to all categories</a></p>
 
-    <h2>Products</h2>
-    <div class="cards">
-        {% for p in products %}
-            <div class="card {% if p.status == 'non_seasonal' %}dimmed{% endif %}">
-                <a href="{% url 'product_detail' p.id %}"><strong>{{ p.name }}</strong></a>
-                {% if p.is_surplus and p.has_discount %}
-                    <span style="text-decoration:line-through;">£{{ p.price }}</span>
-                    <strong>£{{ p.discounted_price|floatformat:2 }}</strong> / {{ p.unit }}
-                    <span class="badge">{{ p.discount_percentage }}% off</span><br>
-                {% else %}
-                    £{{ p.price }} / {{ p.unit }}<br>
+<h2>Products</h2>
+<div class="cards">
+    {% for p in products %}
+        <div class="card {% if p.status == 'out_of_season' or p.status == 'unavailable' %}dimmed{% endif %}">
+            <a href="{% url 'product_detail' p.id %}"><strong>{{ p.name }}</strong></a>
+
+            {% if p.is_surplus and p.has_discount %}
+                <span style="text-decoration:line-through;">£{{ p.price }}</span>
+                <strong>£{{ p.discounted_price|floatformat:2 }}</strong> / {{ p.unit }}
+                <span class="badge">{{ p.discount_percentage }}% off</span><br>
+            {% else %}
+                £{{ p.price }} / {{ p.unit }}<br>
+            {% endif %}
+
+            Farm:
+            {% if p.producer.producerprofile %}
+                {{ p.producer.producerprofile.business_name }}
+            {% else %}
+                {{ p.producer.username }}
+            {% endif %}
+            <br>
+
+            {% if p.status == "seasonal" %}
+                <span class="badge">In Season</span><br>
+
+                {% if p.season_start_month and p.season_end_month %}
+                    <small>Available: {{ p.season_start_month }} - {{ p.season_end_month }}</small>
                 {% endif %}
 
-                Farm:
-                {% if p.producer.producerprofile %}
-                    {{ p.producer.producerprofile.business_name }}
-                {% else %}
-                    {{ p.producer.username }}
-                {% endif %}
-                <br>
+            {% elif p.status == "all_year" %}
+                <span class="badge">Available Year-Round</span>
 
-                {% if p.status == "seasonal" %}
-                    <span class="badge">In Season</span><br>
-                    {% if p.season_start_month and p.season_end_month %}
-                        <small>Available: {{ p.season_start_month }} - {{ p.season_end_month }}</small>
-                    {% endif %}
-                {% elif p.status == "all_year" %}
-                    <span class="badge">Available Year-Round</span>
-                {% else %}
-                    <span class="badge" style="background:#ef4444;">Out of Season</span><br>
-                    <small style="color:#ef4444;">Currently unavailable</small>
-                {% endif %}             
-            </div>
-        {% empty %}
-            <p>No products in this category yet.</p>
-        {% endfor %}
+            {% elif p.status == "out_of_season" %}
+                <span class="badge" style="background:#ef4444;">Out of Season</span><br>
+                <small style="color:#ef4444;">Currently unavailable</small>
+
+            {% elif p.status == "unavailable" %}
+                <span class="badge" style="background:#ef4444;">Unavailable</span><br>
+                <small style="color:#ef4444;">Currently unavailable</small>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No products in this category yet.</p>
+    {% endfor %}
     </div>
 </div>
 

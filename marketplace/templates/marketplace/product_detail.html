@@ -131,6 +131,11 @@
                 £{{ product.price }} / {{ product.unit }}
             {% endif %}
         </div>
+        {% if food_miles %}
+            <div class="row">
+                <strong>Food Miles:</strong> {{ food_miles }} miles
+            </div>
+        {% endif %}
 
         <div class="row">
             <strong>Description:</strong><br>
@@ -157,13 +162,17 @@
                         Available: {{ product.season_start_month }} - {{ product.season_end_month }}
                     </span>
                 {% endif %}
-                
+            
             {% elif product.status == "all_year" %}
                 <span class="badge">Available Year-Round</span>
                 
-            {% else %}
+            {% elif product.status == "out_of_season" %}
                 <span class="badge">Out of Season</span>
+
+            {% elif product.status == "unavailable" %}
+                <span class="badge">Unavailable</span>
             {% endif %}
+
         </div>
 
         {% if product.surplus_note %}
@@ -189,15 +198,11 @@
 
         <hr>
 
-        {% if product.status == "non_seasonal" %}
-            <p style="color:red;"><strong>Note: This product is currently out of season.</strong></p>
-        {% endif %}
-
         <h2>Add to Cart</h2>
 
-        {% if product.status == "non_seasonal" %}
+        {% if product.status == "out_of_season" or product.status == "unavailable" %}
             <p style="color:red;">
-                <strong>This product is currently out of season and cannot be ordered.</strong>
+                <strong>This product is currently unavailable and cannot be ordered.</strong>
             </p>
         {% else %}
             <form method="post" action="{% url 'add_to_cart' product.id %}">
@@ -211,7 +216,6 @@
 
         <hr>
 
-        <!-- ✅ REVIEWS SECTION -->
         <h2>Reviews</h2>
 
         {% if reviews %}

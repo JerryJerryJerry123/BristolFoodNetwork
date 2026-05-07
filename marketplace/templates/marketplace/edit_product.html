@@ -75,8 +75,9 @@
 
 <select name="status">
     <option value="seasonal" {% if product.status == "seasonal" %}selected{% endif %}>Seasonal</option>
-    <option value="non_seasonal" {% if product.status == "non_seasonal" %}selected{% endif %}>Non Seasonal</option>
+    <option value="out_of_season" {% if product.status == "out_of_season" %}selected{% endif %}>Non Seasonal</option>
     <option value="all_year" {% if product.status == "all_year" %}selected{% endif %}>All Year</option>
+    <option value="unavailable" {% if product.status == "unavailable" %}selected{% endif %}>Unavailable</option>
 </select>
 
 <br><br>

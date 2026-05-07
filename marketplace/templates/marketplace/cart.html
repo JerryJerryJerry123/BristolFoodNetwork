@@ -151,7 +151,7 @@
                     <td>
                         <form class="qty-form" method="post" action="{% url 'update_cart_item' item.id %}">
                             {% csrf_token %}
-                            <input type="number" name="quantity" step="0.01" min="0" value="{{ item.quantity }}">
+                            <input type="number" name="quantity" step="1.00" min="1" value="{{ item.quantity }}">
                             <button type="submit">Update</button>
                         </form>
                     
@@ -167,6 +167,10 @@
             </table>
 
             <div class="total"><strong>Total:</strong> £{{ cart.total|floatformat:2 }}</div>
+
+            <div class="total">
+                <strong>Total Food Miles:</strong> {{ total_food_miles }} miles
+            </div>
             
             <div style="margin-top:20px; text-align:right;">
                 <a href="{% url 'checkout' %}">

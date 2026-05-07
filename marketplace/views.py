@@ -3,19 +3,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from decimal import Decimal
 from django.db.models import Q
-
 from accounts.models import CustomerProfile
 from .forms import ProductForm
-from .models import Product, Category, Cart, CartItem
-
 from django.utils import timezone
 from datetime import timedelta, date
 from collections import defaultdict
 from django.db.models import Avg
-
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+import stripe 
+from django.conf import settings
+from django.contrib.auth.models import User
+  
 
 from .models import (
     Product,
@@ -33,6 +33,20 @@ from .models import (
     Recipe,
     FarmStory
 )
+
+def calculate_food_miles(customer_postcode, producer_postcode):
+    if not customer_postcode or not producer_postcode:
+        return 0
+
+    customer_area = customer_postcode.upper().split()[0]
+    producer_area = producer_postcode.upper().split()[0]
+
+    if customer_area == producer_area:
+        return 2
+    elif customer_area[:2] == producer_area[:2]:
+        return 10
+    else:
+        return 25
 
 def view_content(request):
     recipes = Recipe.objects.all().order_by("-created_at")
@@ -187,14 +201,18 @@ def product_detail(request, product_id):
     if isinstance(allergens, str):
         allergens = [allergens]
 
-    # ✅ GET REVIEWS
     reviews = product.reviews.all().order_by("-created_at")
 
-    # ✅ CHECK IF USER IS CUSTOMER (FIXES BUTTON ISSUE)
     is_customer = hasattr(request.user, "customerprofile")
 
-    # ✅ AVERAGE RATING (for case study step 11)
     avg_rating = product.reviews.aggregate(Avg("rating"))["rating__avg"]
+
+    food_miles = None
+
+    if hasattr(request.user, "customerprofile"):
+        customer_postcode = request.user.customerprofile.postcode
+        producer_postcode = product.producer.producerprofile.postcode
+        food_miles = calculate_food_miles(customer_postcode, producer_postcode)
 
     return render(request, "marketplace/product_detail.html", {
         "product": product,
@@ -202,6 +220,7 @@ def product_detail(request, product_id):
         "reviews": reviews,
         "is_customer": is_customer,
         "avg_rating": avg_rating,
+        "food_miles": food_miles,
     })
 
 def _get_customer_cart(user):
@@ -216,8 +235,8 @@ def add_to_cart(request, product_id):
 
     product = get_object_or_404(Product, id=product_id)
 
-    if product.status == "non_seasonal":
-        messages.error(request, "This product is currently out of season.")
+    if product.status in ["out_of_season", "unavailable"]:
+        messages.error(request, "This product is currently unavailable.")
         return redirect("product_detail", product_id=product.id)
 
     if request.method == "POST":
@@ -234,12 +253,14 @@ def add_to_cart(request, product_id):
         cart = _get_customer_cart(request.user)
 
         item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+
         if created:
             item.quantity = qty
         else:
             item.quantity = item.quantity + qty
 
         item.save()
+
         messages.success(request, f"Added {product.name} to your cart.")
 
     return redirect("product_detail", product_id=product.id)
@@ -251,8 +272,18 @@ def view_cart(request):
 
     cart = _get_customer_cart(request.user)
 
+    total_food_miles = 0
+
+    customer_postcode = request.user.customerprofile.postcode
+
+    for item in cart.items.all():
+        producer_postcode = item.product.producer.producerprofile.postcode
+        miles = calculate_food_miles(customer_postcode, producer_postcode)
+        total_food_miles += miles
+
     return render(request, "marketplace/cart.html", {
         "cart": cart,
+        "total_food_miles": total_food_miles,
     })
 
 @login_required
@@ -288,12 +319,10 @@ def get_next_weekday(target_weekday):
     if days_ahead <= 0:
         days_ahead += 7
     return today + timedelta(days=days_ahead)
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @login_required
 def checkout(request):
-    if not hasattr(request.user, "customerprofile"):
-        return redirect("/")
-
     cart = _get_customer_cart(request.user)
     cart_items = cart.items.select_related("product__producer")
 
@@ -301,177 +330,37 @@ def checkout(request):
         messages.error(request, "Your cart is empty.")
         return redirect("view_cart")
 
-    if request.method == "POST":
+    line_items = []
 
-        import re
-        from datetime import datetime
+    for item in cart_items:
+        price = item.product.discounted_price or item.product.price
 
-        # =========================
-        # PAYMENT VALIDATION
-        # =========================
-        payment_method = request.POST.get("payment_method")
+        line_items.append({
+            "price_data": {
+                "currency": "gbp",
+                "product_data": {"name": item.product.name},
+                "unit_amount": int(float(price) * 100),
+            },
+            "quantity": int(item.quantity),
+        })
 
-        if not payment_method:
-            messages.error(request, "Please select a payment method.")
-            return render(request, "marketplace/checkout.html", {"cart": cart})
+    # ⬅️ OUTSIDE the loop
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
+        mode='payment',
+        success_url='http://localhost:8000/marketplace/payment-success/?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url='http://localhost:8000/marketplace/payment-cancelled/',
+        metadata={
+            "user_id": str(request.user.id),
+            "cart_id": str(cart.id),
+        }
+    )
 
-        # FORCE validation if card selected
-        if payment_method == "card":
+    return redirect(session.url)
 
-            import re
-            from datetime import datetime
-
-            card_number = request.POST.get("card_number", "").strip()
-            expiry = request.POST.get("expiry", "").strip()
-            cvv = request.POST.get("cvv", "").strip()
-
-            print("DEBUG:", card_number, expiry, cvv)  # 👈 TEMP DEBUG
-
-            # Empty check
-            if not card_number or not expiry or not cvv:
-                messages.error(request, "Please enter card details.")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-            # Card number check
-            if not re.fullmatch(r"\d{12}", card_number):
-                messages.error(request, "Card number must be exactly 12 digits.")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-            # CVV check
-            if not re.fullmatch(r"\d{3}", cvv):
-                messages.error(request, "CVV must be exactly 3 digits.")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-            # Expiry check
-            try:
-                expiry_date = datetime.strptime(expiry, "%m/%y")
-                current_month = datetime.now().replace(day=1)
-
-                if expiry_date < current_month:
-                    messages.error(request, "Card expiry date cannot be in the past.")
-                    return render(request, "marketplace/checkout.html", {"cart": cart})
-
-            except ValueError:
-                messages.error(request, "Invalid expiry date format.")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-        # =========================
-        # STOCK VALIDATION
-        # =========================
-        for item in cart_items:
-            if item.quantity > item.product.quantity:
-                messages.error(request, f"Not enough stock for {item.product.name}")
-                return render(request, "marketplace/checkout.html", {
-                    "cart": cart
-                })
- 
-        # CREATE ORDER
-        special_instructions = ""
-
-        if request.user.customerprofile.account_type == "organisation":
-            special_instructions = request.POST.get("special_instructions", "")
-
-        order = Order.objects.create(
-            customer=request.user.customerprofile,
-            special_instructions=special_instructions
-        )
-
-        grouped_items = defaultdict(list)
-
-        for item in cart_items:
-            grouped_items[item.product.producer].append(item)
-
-        total_amount = 0
-        minimum_date = timezone.now() + timedelta(hours=48)
-
-        for producer, items in grouped_items.items():
-
-            delivery_date_str = request.POST.get(f"delivery_date_{producer.id}")
-
-            if not delivery_date_str:
-                messages.error(request, "Please select a delivery date.")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-            delivery_date = timezone.datetime.fromisoformat(delivery_date_str).date()
-
-            if delivery_date < minimum_date.date():
-                messages.error(request, "Delivery must be at least 48 hours from now.")
-                return render(request, "marketplace/checkout.html", {"cart": cart})
-
-            suborder = SubOrder.objects.create(
-                order=order,
-                producer=producer,
-                delivery_date=delivery_date,
-            )
-
-            subtotal = 0
-
-            for item in items:
-                OrderItem.objects.create(
-                    suborder=suborder,
-                    product=item.product,
-                    quantity=item.quantity
-                )
-
-                item.product.quantity -= item.quantity
-                item.product.save()
-
-                price = item.product.discounted_price
-                subtotal += price * item.quantity
-
-            suborder.subtotal = subtotal
-            suborder.save()
-
-            total_amount += subtotal
-
-        order.total_amount = total_amount
-        order.save()
-
-        # =========================
-        # RECURRING ORDER
-        # =========================
-        if request.POST.get("recurring"):
-
-            next_order_date = get_next_weekday(0)
-
-            recurring = RecurringOrder.objects.create(
-                customer=request.user,
-                frequency=request.POST.get("frequency", "weekly"),
-                day_of_week="Monday",
-                delivery_day="Wednesday",
-                next_order_date=next_order_date
-            )
-
-            for item in cart_items:
-                RecurringOrderItem.objects.create(
-                    recurring_order=recurring,
-                    product=item.product,
-                    quantity=item.quantity
-                )
-
-            scheduled = ScheduledOrder.objects.create(
-                recurring_order=recurring,
-                scheduled_date=next_order_date
-            )
-
-            for item in cart_items:
-                ScheduledOrderItem.objects.create(
-                    scheduled_order=scheduled,
-                    product=item.product,
-                    quantity=item.quantity
-                )
-
-        # =========================
-        # CLEAR CART
-        # =========================
-        cart.items.all().delete()
-
-        messages.success(request, "Order placed successfully!")
-        return redirect("/")
-
-    return render(request, "marketplace/checkout.html", {
-        "cart": cart
-    })
+def payment_success(request):
+    return HttpResponse("Payment received. You can close this page.")
 
 @login_required
 def recurring_orders(request):
@@ -482,8 +371,6 @@ def recurring_orders(request):
     return render(request, "marketplace/recurring_orders.html", {
         "scheduled_orders": scheduled_orders
     })
-
-from .models import SubOrder
 
 @login_required
 def producer_orders(request):
@@ -575,7 +462,6 @@ def edit_product(request, product_id):
 
         product.is_surplus = request.POST.get("is_surplus") == "on"
 
-        # Discount handling
         try:
             discount = int(request.POST.get("discount_percentage", 0))
         except ValueError:
@@ -592,13 +478,10 @@ def edit_product(request, product_id):
             product.surplus_expiry = None
             product.surplus_note = ""
 
-        # ✅ SAVE (YOU WERE MISSING THIS)
         product.save()
 
-        # ✅ SUCCESS MESSAGE
         messages.success(request, "Product updated successfully")
 
-        # ✅ REDIRECT (PREVENT FORM RESUBMIT)
         return redirect("producer_products")
 
     return render(request, "marketplace/edit_product.html", {
@@ -749,6 +632,16 @@ def mark_delivered(request, suborder_id):
 
     return redirect('producer_orders')
 
+@login_required
+def mark_failed(request, suborder_id):
+    suborder = get_object_or_404(SubOrder, id=suborder_id)
+
+    if request.method == "POST":
+        suborder.status = "failed"
+        suborder.save()
+        suborder.reschedule_next_day()
+    return redirect("producer_orders")
+
 def edit_scheduled_order(request, order_id):
     order = get_object_or_404(
         ScheduledOrder,
@@ -839,6 +732,7 @@ def cancel_suborder(request, suborder_id):
 
 @login_required
 def producer_cancel_suborder(request, suborder_id):
+        print("trying to cancelllllllllll")
         suborder = get_object_or_404(SubOrder, id=suborder_id)
 
         # Ensure this producer owns this suborder
@@ -880,7 +774,184 @@ def delivery_update(request):
     except SubOrder.DoesNotExist:
         return JsonResponse({"error": "Invalid suborder"}, status=404)
 
-    suborder.status = new_status
+    # 🧠 BUSINESS LOGIC LIVES HERE
+    if new_status == "failed":
+        suborder.delivery_date += timedelta(days=1)
+        suborder.status = "pending"
+    else:
+        suborder.status = new_status
+
     suborder.save()
 
-    return JsonResponse({"success": True})
+    return JsonResponse({
+        "success": True,
+        "status": suborder.status,
+        "delivery_date": str(suborder.delivery_date)
+    })
+
+def handle_successful_payment(session):
+    print("PROCESSING PAYMENT…")
+
+    # =========================
+    # BASIC SAFETY
+    # =========================
+    session_id = session.get("id")
+    metadata = session.get("metadata") or {}
+
+    # Duplicate protection
+    if Order.objects.filter(stripe_session_id=session_id).exists():
+        print("Order already exists — ignoring duplicate webhook")
+        return
+
+    # Metadata guard
+    user_id = metadata.get("user_id")
+    if not user_id:
+        print("Missing user_id in metadata — ignoring webhook")
+        return
+
+    # =========================
+    # USER + CUSTOMER PROFILE
+    # =========================
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        print(f"User {user_id} does not exist — ignoring webhook")
+        return
+
+    try:
+        customer = user.customerprofile
+    except CustomerProfile.DoesNotExist:
+        print(f"User {user_id} has no customer profile — ignoring webhook")
+        return
+
+    # =========================
+    # CART VALIDATION
+    # =========================
+    cart = _get_customer_cart(user)
+    cart_items = cart.items.select_related("product__producer")
+
+    if not cart_items.exists():
+        print("Cart empty — ignoring webhook")
+        return
+
+    # =========================
+    # STOCK VALIDATION
+    # =========================
+    for item in cart_items:
+        if item.quantity > item.product.quantity:
+            print(f"Insufficient stock for {item.product.name}")
+            return  # Do NOT crash webhook
+
+    # =========================
+    # CREATE ORDER
+    # =========================
+    order = Order.objects.create(
+        customer=customer,
+        stripe_session_id=session_id
+    )
+
+    grouped_items = defaultdict(list)
+    for item in cart_items:
+        grouped_items[item.product.producer].append(item)
+
+    total_amount = 0
+
+    # =========================
+    # CREATE SUBORDERS
+    # =========================
+    for producer, items in grouped_items.items():
+
+        suborder = SubOrder.objects.create(
+            order=order,
+            producer=producer,
+            delivery_date=timezone.now().date(),
+        )
+
+        subtotal = 0
+
+        for item in items:
+            OrderItem.objects.create(
+                suborder=suborder,
+                product=item.product,
+                quantity=item.quantity
+            )
+
+            # Reduce stock
+            item.product.quantity -= item.quantity
+            item.product.save()
+
+            price = item.product.discounted_price
+            subtotal += price * item.quantity
+
+        suborder.subtotal = subtotal
+        suborder.save()
+        total_amount += subtotal
+
+    # =========================
+    # FINAL TOTAL
+    # =========================
+    order.total_amount = total_amount
+    order.save()
+
+    # =========================
+    # RECURRING ORDERS
+    # =========================
+    if metadata.get("recurring") == "true":
+
+        recurring = RecurringOrder.objects.create(
+            customer=customer,
+            frequency="weekly",
+            day_of_week="Monday",
+            delivery_day="Wednesday",
+            next_order_date=get_next_weekday(0)
+        )
+
+        for item in cart_items:
+            RecurringOrderItem.objects.create(
+                recurring_order=recurring,
+                product=item.product,
+                quantity=item.quantity
+            )
+
+    # =========================
+    # CLEAR CART
+    # =========================
+    cart.items.all().delete()
+
+    print("ORDER SUCCESSFULLY CREATED")
+
+@csrf_exempt
+def stripe_webhook(request):
+    print("WEBHOOK HIT")
+
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload,
+            sig_header,
+            settings.STRIPE_WEBHOOK_SECRET
+        )
+
+        print("EVENT:", event["type"])
+
+    except Exception as e:
+        print("WEBHOOK ERROR:", str(e))
+        return HttpResponse(status=400)
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+
+        # Only process if fully paid
+        if session.get("payment_status") != "paid":
+            print("Ignoring session without full payment")
+            return HttpResponse(status=200)
+
+        try:
+            handle_successful_payment(session)
+        except Exception as e:
+            print("PAYMENT ERROR:", e)
+            return HttpResponse(status=500)
+        
+    return HttpResponse(status=200)

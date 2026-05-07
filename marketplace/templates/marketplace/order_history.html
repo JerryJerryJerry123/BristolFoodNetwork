@@ -86,6 +86,7 @@
         .badge.ready{ background:#fb923c; }       /* orange */
         .badge.delivered{ background:#22c55e; }   /* green */
         .badge.cancelled{ background:#ef4444; }   /* red */
+        .badge.failed { background:#ef4444; }
     </style>
 </head>
 <body>
@@ -121,15 +122,13 @@
                             <p>Delivery Date: {{ suborder.delivery_date }}</p>
                             <p>
                                 <strong>Status:</strong>
-                                <span class="badge">
-                                    {{ suborder.get_status_display }}
-                                        </span>
                             </p>
                             <span class="badge
                                 {% if suborder.status == 'pending' %}pending
                                 {% elif suborder.status == 'ready' %}ready
                                 {% elif suborder.status == 'delivered' %}delivered
                                 {% elif suborder.status == 'cancelled' %}cancelled
+                                {% elif suborder.status == 'failed' %}failed
                                 {% endif %}
                             ">
                                 {{ suborder.get_status_display }}

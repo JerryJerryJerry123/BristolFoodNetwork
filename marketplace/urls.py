@@ -24,6 +24,9 @@ from .views import (create_product,
                     cancel_suborder,
                     producer_cancel_suborder,
                     delivery_update,
+                    stripe_webhook,
+                    checkout,
+                    payment_success,
                     )
 
 
@@ -60,4 +63,7 @@ urlpatterns = [
     path('scheduled/<int:order_id>/edit/', edit_scheduled_order, name='edit_scheduled_order'),
     path("producer/suborder/<int:suborder_id>/cancel/", producer_cancel_suborder, name="producer_cancel_suborder"),
     path("api/delivery/update/", delivery_update, name="delivery_update"),
+    path('stripe/webhook/', stripe_webhook),
+    path("checkout/", checkout, name="checkout"),
+    path("payment-success/", payment_success, name="payment_success"),
 ]

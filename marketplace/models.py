@@ -51,6 +51,7 @@ class Product(models.Model):
     STATUS_CHOICES = [
         ('seasonal', 'Seasonal'),
         ('out_of_season', 'Out of Season'),
+        ('all_year', 'All Year'),
         ('unavailable', 'Unavailable'),
     ]
 
@@ -124,7 +125,6 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-
     quantity = models.DecimalField(max_digits=8, decimal_places=2, default=1)
 
     class Meta:
@@ -142,7 +142,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     special_instructions = models.TextField(blank=True, null=True)
-    
+    stripe_session_id = models.CharField(max_length=255, unique=True)
     def __str__(self):
         return f"Order #{self.id} by {self.customer.user.username}"
 
@@ -160,6 +160,8 @@ class SubOrder(models.Model):
     producer = models.ForeignKey(User, on_delete=models.CASCADE)
     delivery_date = models.DateField()
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    stripe_session_id = models.CharField(max_length=255, blank=True, null=True)
+    paid = models.BooleanField(default=False)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -172,8 +174,12 @@ class SubOrder(models.Model):
     def is_valid_delivery_date(self):
         minimum_date = timezone.now() + timedelta(hours=48)
         return self.delivery_date >= minimum_date.date()
-
-
+    
+    def reschedule_next_day(self):
+        self.delivery_date += timedelta(days=1)
+        self.status = "pending"
+        self.save()
+    
     def __str__(self):
         return f"SubOrder #{self.id} - {self.producer.username}"
     
@@ -183,7 +189,7 @@ class SubOrder(models.Model):
 class OrderItem(models.Model):
     suborder = models.ForeignKey(SubOrder, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.DecimalField(max_digits=8, decimal_places=2)
+    quantity = models.PositiveIntegerField()
 
     @property
     def line_total(self):
