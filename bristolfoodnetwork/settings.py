@@ -14,6 +14,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -129,3 +132,6 @@ LOGOUT_REDIRECT_URL = '/'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 LOGIN_URL = '/login/'
+STRIPE_PUBLIC_KEY=''
+STRIPE_SECRET_KEY=''
+STRIPE_WEBHOOK_SECRET=''
