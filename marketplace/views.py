@@ -796,11 +796,15 @@ def delivery_update(request):
         suborder = SubOrder.objects.get(id=suborder_id)
     except SubOrder.DoesNotExist:
         return JsonResponse({"error": "Invalid suborder"}, status=404)
+    
+    VALID_STATUSES = {"pending", "ready", "delivered", "failed", "cancelled"}
 
-    # 🧠 BUSINESS LOGIC LIVES HERE
+    if new_status not in VALID_STATUSES:
+        return JsonResponse({"error": "Invalid status"}, status=400)
+    
     if new_status == "failed":
         suborder.delivery_date += timedelta(days=1)
-        suborder.status = "pending"
+        suborder.status = "ready"
     else:
         suborder.status = new_status
 
